@@ -1,0 +1,202 @@
+Gig No,Venue,Artist City,Artist Following,Venue Gathering,Artist
+1,Mumbai,Mumbai,45000,850,DJ Nucleya
+1,Mumbai,Goa,32000,850,Arjun Vagale
+1,Mumbai,Bangalore,28000,850,BLOT!
+2,Mumbai,Pune,18000,720,Lost Stories
+2,Mumbai,Mumbai,38000,720,Sandunes
+3,Mumbai,Kolkata,15000,650,Oceantied
+4,Mumbai,Mumbai,42000,900,Kohra
+4,Mumbai,Jaipur,25000,900,Anish Sood
+4,Mumbai,Bangalore,31000,900,Ritviz
+5,Bangalore,Bangalore,35000,680,Ritviz
+5,Bangalore,Kochi,29000,680,Kavya Trehan
+6,Bangalore,Delhi,26000,720,Su Real
+6,Bangalore,Hyderabad,19000,720,Siana Catherine
+6,Bangalore,Chandigarh,21000,720,Madboy/Mink
+7,Bangalore,Kolkata,17000,610,Krunk Kulture
+8,Bangalore,Bangalore,33000,770,Smokey The Ghost
+8,Bangalore,Goa,24000,770,Oceantied
+9,Bangalore,Delhi,27000,730,Teri Miko
+9,Bangalore,Bangalore,30000,730,Kumail
+10,Delhi,Delhi,48000,950,Anish Sood
+10,Delhi,Mumbai,36000,950,DJ Nucleya
+10,Delhi,Bangalore,31000,950,Su Real
+11,Delhi,Shillong,20000,740,Candice Redding
+11,Delhi,Pune,23000,740,Zaeden
+12,Delhi,Hyderabad,25000,810,Sid Vashi
+12,Delhi,Delhi,41000,810,Arjun Vagale
+13,Delhi,Lucknow,28000,850,Tuhin Mehta
+13,Delhi,Bangalore,32000,850,BLOT!
+14,Delhi,Delhi,39000,900,Hashback Hashish
+15,Kolkata,Kolkata,22000,580,Oceantied
+16,Kolkata,Mumbai,27000,620,Sandunes
+16,Kolkata,Guwahati,24000,620,Teri Miko
+17,Kolkata,Bangalore,19000,590,Krunk Kulture
+17,Kolkata,Bhubaneswar,16000,590,Karan Kanchan
+18,Kolkata,Hyderabad,18000,600,Murthovic
+18,Kolkata,Kolkata,25000,600,Candice Redding
+19,Kolkata,Mumbai,21000,640,Kavya Trehan
+19,Kolkata,Indore,23000,640,Hashback Hashish
+20,Kolkata,Kolkata,20000,610,Spacejams
+21,Pune,Pune,26000,720,Lost Stories
+21,Pune,Mumbai,30000,720,Kohra
+22,Pune,Bangalore,22000,690,Madboy/Mink
+22,Pune,Nasik,25000,690,Zaeden
+23,Pune,Ahmedabad,17000,630,Karan Kanchan
+23,Pune,Hyderabad,19000,630,Ash Roy
+24,Pune,Pune,28000,760,Nucleya
+24,Pune,Mumbai,24000,760,Sandunes
+25,Pune,Bangalore,21000,680,Kumail
+25,Pune,Goa,27000,680,Lifafa
+26,Hyderabad,Hyderabad,29000,800,Stalvart John
+26,Hyderabad,Mumbai,33000,800,DJ Nucleya
+27,Hyderabad,Delhi,26000,770,Sid Vashi
+27,Hyderabad,Bangalore,24000,770,Siana Catherine
+28,Hyderabad,Pune,20000,690,Ash Roy
+28,Hyderabad,Vishakhapatnam,18000,690,Murthovic
+29,Hyderabad,Hyderabad,31000,820,Lambo Drive
+29,Hyderabad,Coimbatore,25000,820,Tuhin Mehta
+30,Hyderabad,Bangalore,23000,740,Smokey The Ghost
+30,Hyderabad,Hyderabad,28000,740,Aditya Ashok
+31,Mumbai,Jaipur,34000,870,Su Real
+31,Mumbai,Bangalore,26000,870,Kumail
+31,Mumbai,Kolkata,19000,870,Spacejams
+32,Mumbai,Goa,27000,810,Lifafa
+32,Mumbai,Hyderabad,23000,810,Aditya Ashok
+33,Mumbai,Mumbai,40000,920,Peter Cat Recording Co
+33,Mumbai,Chandigarh,29000,920,Hashback Hashish
+34,Mumbai,Bangalore,31000,880,BLOT!
+34,Mumbai,Mumbai,35000,880,DJ Nucleya
+35,Bangalore,Pune,22000,680,Zaeden
+36,Bangalore,Mumbai,35000,820,Kohra
+36,Bangalore,Mysore,28000,820,Anish Sood
+37,Bangalore,Hyderabad,21000,690,Lambo Drive
+37,Bangalore,Shillong,18000,690,Candice Redding
+38,Bangalore,Bangalore,37000,840,Ritviz
+38,Bangalore,Kochi,26000,840,Sandunes
+39,Bangalore,Delhi,30000,780,Arjun Vagale
+39,Bangalore,Bangalore,28000,780,Smokey The Ghost
+40,Delhi,Bangalore,29000,860,Smokey The Ghost
+40,Delhi,Mumbai,33000,860,Peter Cat Recording Co
+41,Delhi,Udaipur,24000,820,Lifafa
+41,Delhi,Hyderabad,27000,820,Sid Vashi
+41,Delhi,Kolkata,21000,820,Oceantied
+42,Delhi,Delhi,44000,940,Hashback Hashish
+42,Delhi,Mumbai,31000,940,Nucleya
+43,Delhi,Bangalore,28000,840,Kumail
+43,Delhi,Dehradun,35000,840,Su Real
+44,Kolkata,Delhi,25000,660,Teri Miko
+44,Kolkata,Patna,28000,660,Tuhin Mehta
+45,Kolkata,Bangalore,20000,630,Krunk Kulture
+45,Kolkata,Ranchi,17000,630,Karan Kanchan
+46,Kolkata,Hyderabad,19000,620,Murthovic
+46,Kolkata,Kolkata,26000,620,Oceantied
+47,Kolkata,Kolkata,24000,690,Candice Redding
+47,Kolkata,Darjeeling,22000,690,Sandunes
+48,Pune,Bangalore,24000,730,Madboy/Mink
+48,Pune,Mumbai,29000,730,Kohra
+49,Pune,Surat,27000,760,Zaeden
+49,Pune,Hyderabad,20000,760,Ash Roy
+50,Pune,Kolkata,18000,660,Spacejams
+50,Pune,Pune,30000,660,Lost Stories
+51,Hyderabad,Mumbai,32000,830,Peter Cat Recording Co
+51,Hyderabad,Vijayawada,28000,830,Anish Sood
+52,Hyderabad,Bangalore,25000,750,Siana Catherine
+52,Hyderabad,Goa,21000,750,Lifafa
+53,Hyderabad,Kolkata,19000,680,Candice Redding
+53,Hyderabad,Hyderabad,34000,680,Stalvart John
+54,Mumbai,Mumbai,38000,800,Kohra
+54,Mumbai,Bangalore,27000,800,Ritviz
+55,Mumbai,Jaipur,33000,870,Arjun Vagale
+55,Mumbai,Pune,19000,870,Lost Stories
+56,Mumbai,Hyderabad,24000,760,Lambo Drive
+56,Mumbai,Kochi,18000,760,Oceantied
+57,Mumbai,Mumbai,41000,910,DJ Nucleya
+57,Mumbai,Ahmedabad,30000,910,Hashback Hashish
+57,Mumbai,Bangalore,26000,910,BLOT!
+58,Bangalore,Bangalore,32000,750,Kumail
+58,Bangalore,Mangalore,25000,750,Kavya Trehan
+59,Bangalore,Delhi,29000,800,Su Real
+59,Bangalore,Hyderabad,22000,800,Siana Catherine
+60,Bangalore,Chandigarh,20000,670,Madboy/Mink
+60,Bangalore,Kolkata,17000,670,Krunk Kulture
+61,Bangalore,Bangalore,36000,820,Ritviz
+61,Bangalore,Goa,28000,820,Sandunes
+62,Delhi,Delhi,46000,930,Anish Sood
+62,Delhi,Mumbai,34000,930,DJ Nucleya
+63,Delhi,Bangalore,30000,880,BLOT!
+63,Delhi,Shimla,23000,880,Candice Redding
+64,Delhi,Pune,25000,850,Zaeden
+64,Delhi,Amritsar,26000,850,Sid Vashi
+65,Delhi,Delhi,42000,920,Hashback Hashish
+65,Delhi,Mumbai,29000,920,Peter Cat Recording Co
+66,Kolkata,Kolkata,23000,600,Oceantied
+66,Kolkata,Siliguri,26000,600,Tuhin Mehta
+67,Kolkata,Delhi,24000,640,Teri Miko
+67,Kolkata,Bangalore,19000,640,Smokey The Ghost
+68,Kolkata,Agartala,16000,580,Karan Kanchan
+68,Kolkata,Hyderabad,18000,580,Murthovic
+69,Kolkata,Kolkata,25000,670,Candice Redding
+69,Kolkata,Mumbai,21000,670,Kavya Trehan
+70,Pune,Pune,27000,740,Lost Stories
+70,Pune,Mumbai,31000,740,Kohra
+71,Pune,Bangalore,23000,710,Madboy/Mink
+71,Pune,Vadodara,26000,710,Zaeden
+72,Pune,Kolkata,17000,650,Spacejams
+72,Pune,Nagpur,20000,650,Ash Roy
+73,Pune,Pune,29000,780,Lifafa
+73,Pune,Goa,24000,780,Sandunes
+74,Hyderabad,Hyderabad,30000,810,Stalvart John
+74,Hyderabad,Mumbai,32000,810,DJ Nucleya
+75,Hyderabad,Delhi,27000,790,Sid Vashi
+75,Hyderabad,Bangalore,24000,790,Siana Catherine
+76,Hyderabad,Pune,21000,720,Ash Roy
+76,Hyderabad,Warangal,19000,720,Murthovic
+77,Hyderabad,Hyderabad,33000,850,Lambo Drive
+77,Hyderabad,Tirupati,26000,850,Tuhin Mehta
+78,Mumbai,Goa,35000,890,Su Real
+78,Mumbai,Bangalore,28000,890,Kumail
+79,Mumbai,Kolkata,20000,770,Spacejams
+79,Mumbai,Lonavala,25000,770,Lifafa
+80,Mumbai,Hyderabad,23000,840,Aditya Ashok
+80,Mumbai,Mumbai,39000,840,Peter Cat Recording Co
+81,Bangalore,Pune,22000,700,Zaeden
+81,Bangalore,Mumbai,33000,700,Kohra
+82,Bangalore,Pondicherry,28000,760,Anish Sood
+82,Bangalore,Hyderabad,21000,760,Lambo Drive
+83,Bangalore,Madurai,18000,680,Candice Redding
+83,Bangalore,Bangalore,35000,680,Ritviz
+84,Delhi,Bangalore,29000,870,Smokey The Ghost
+84,Delhi,Mumbai,32000,870,DJ Nucleya
+85,Delhi,Jaipur,24000,830,Lifafa
+85,Delhi,Hyderabad,27000,830,Sid Vashi
+86,Delhi,Kolkata,22000,800,Oceantied
+86,Delhi,Chandigarh,43000,800,Hashback Hashish
+87,Kolkata,Delhi,25000,650,Teri Miko
+87,Kolkata,Cuttack,27000,650,Tuhin Mehta
+88,Kolkata,Bangalore,20000,620,Krunk Kulture
+88,Kolkata,Raipur,17000,620,Karan Kanchan
+89,Kolkata,Hyderabad,19000,630,Murthovic
+89,Kolkata,Kolkata,24000,630,Oceantied
+90,Pune,Bangalore,23000,720,Madboy/Mink
+90,Pune,Mumbai,28000,720,Kohra
+91,Pune,Aurangabad,26000,750,Zaeden
+91,Pune,Hyderabad,20000,750,Ash Roy
+92,Pune,Kolkata,18000,670,Spacejams
+92,Pune,Pune,29000,670,Lost Stories
+93,Hyderabad,Mumbai,31000,820,Peter Cat Recording Co
+93,Hyderabad,Goa,28000,820,Anish Sood
+94,Hyderabad,Bangalore,25000,760,Siana Catherine
+94,Hyderabad,Kochi,21000,760,Lifafa
+95,Hyderabad,Kolkata,19000,690,Candice Redding
+95,Hyderabad,Hyderabad,32000,690,Stalvart John
+96,Mumbai,Mumbai,37000,880,Kohra
+96,Mumbai,Bangalore,26000,880,Ritviz
+97,Mumbai,Delhi,34000,860,Arjun Vagale
+97,Mumbai,Nashik,20000,860,Lost Stories
+98,Mumbai,Hyderabad,24000,790,Lambo Drive
+98,Mumbai,Kochi,19000,790,Oceantied
+99,Bangalore,Bangalore,34000,790,Kumail
+99,Bangalore,Hubli,27000,790,Kavya Trehan
+100,Bangalore,Delhi,30000,810,Su Real
+100,Bangalore,Hyderabad,22000,810,Siana Catherine

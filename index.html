@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India City Data Visualization</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+    
+    <!-- p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    
+    <!-- Mappa -->
+    <script src="mappa.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(30, 30, 50, 0.7);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.2);
+            z-index: 1000;
+            max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+        
+        #info-panel h2 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            color: #e0e0ff;
+            border-bottom: 2px solid #8b5cf6;
+            padding-bottom: 10px;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+        }
+        
+        #info-panel p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #c4c4e0;
+        }
+        
+        .city-name {
+            font-weight: bold;
+            color: #a78bfa;
+            font-size: 16px;
+            text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+        }
+        
+        #legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(30, 30, 50, 0.7);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.2);
+            z-index: 1000;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            min-width: 200px;
+        }
+        
+        #legend h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #e0e0ff;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 13px;
+            color: #c4c4e0;
+        }
+        
+        .legend-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid rgba(167, 139, 250, 0.5);
+            box-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(30, 30, 50, 0.7);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 15px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.2);
+            z-index: 1000;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+        
+        #controls h3 {
+            color: #e0e0ff;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px 0;
+            width: 100%;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px 0 rgba(139, 92, 246, 0.3);
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+            box-shadow: 0 6px 20px 0 rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .selected {
+            background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%) !important;
+        }
+        
+        /* Scrollbar styling */
+        #info-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #info-panel::-webkit-scrollbar-track {
+            background: rgba(30, 30, 50, 0.5);
+            border-radius: 10px;
+        }
+        
+        #info-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            border-radius: 10px;
+        }
+        
+        #info-panel::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px;">Controls</h3>
+        <button id="reset-btn">Reset View</button>
+        <button id="toggle-labels">Toggle Labels</button>
+        <div style="margin-top: 15px;">
+            <label style="font-size: 12px; color: #c4c4e0; display: block; margin-bottom: 5px;">
+                🎤 Select Artist
+            </label>
+            <select id="artist-dropdown" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(30, 30, 50, 0.9); border: 1px solid rgba(139, 92, 246, 0.3); color: #e0e0ff; font-size: 13px; cursor: pointer;">
+                <option value="">-- Select Artist --</option>
+            </select>
+        </div>
+    </div>
+    
+    <div id="info-panel">
+        <h2>India City Data Visualization</h2>
+        <p style="font-size: 13px; color: #c4c4e0;">Click any marker to explore connections</p>
+        <div id="city-info"></div>
+    </div>
+    
+    <div id="legend">
+        <h3>Legend</h3>
+        <div class="legend-item">
+            <div class="legend-circle" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa); width: 24px; height: 24px;"></div>
+            <span>Venue City (Large)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-circle" style="background: linear-gradient(135deg, #ec4899, #f472b6); width: 12px; height: 12px;"></div>
+            <span>Artist City (Small)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-circle" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);"></div>
+            <span>Connections</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-circle" style="background: linear-gradient(135deg, #ffd700, #ffed4e); width: 12px; height: 12px;"></div>
+            <span>Artist's Home (Selected)</span>
+        </div>
+        <p style="margin-top: 10px; font-size: 11px; color: #c4c4e0;">
+            <strong style="color: #a78bfa;">Click venue:</strong> Purple/pink lines show where artists came from<br/>
+            <strong style="color: #f472b6;">Click artist city:</strong> Pink lines show where artists went to perform<br/>
+            <strong style="color: #ffd700;">Select artist:</strong> Gold lines show their gig journey
+        </p>
+        <p style="margin-top: 8px; font-size: 10px; color: #9090b0;">
+            Marker size = activity level<br/>
+            Gold marker = Artist's home city
+        </p>
+    </div>
+    
+    <script src="sketch.js"></script>
+</body>
+</html>
+

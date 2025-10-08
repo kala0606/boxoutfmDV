@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India City Data Visualization - Vector Map</title>
+    
+    <!-- p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        #info-panel h2 {
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        
+        #info-panel p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .city-name {
+            font-weight: bold;
+            color: #2196F3;
+            font-size: 16px;
+        }
+        
+        #legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+        
+        #legend h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+        
+        .legend-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid #333;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px 0;
+            width: 100%;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        #map-info {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div id="map-info">
+        ✨ Custom Vector Map - Drag to Pan, Scroll to Zoom
+    </div>
+    
+    <div id="controls">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px;">Controls</h3>
+        <button id="reset-btn">Reset View</button>
+        <button id="toggle-labels">Toggle Labels</button>
+    </div>
+    
+    <div id="info-panel">
+        <h2>India City Data Visualization</h2>
+        <p style="font-size: 13px; color: #666;">Click any marker to explore connections</p>
+        <p style="font-size: 12px; color: #4CAF50; margin-top: 10px;">
+            <strong>New:</strong> Fully customizable vector map!<br/>
+            • Drag to pan<br/>
+            • Scroll to zoom<br/>
+            • Crisp at any scale
+        </p>
+        <div id="city-info"></div>
+    </div>
+    
+    <div id="legend">
+        <h3>Legend</h3>
+        <div class="legend-item">
+            <div class="legend-circle" style="background: rgba(33, 150, 243, 0.6); width: 24px; height: 24px;"></div>
+            <span>Venue City (Large)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-circle" style="background: rgba(255, 152, 0, 0.6); width: 12px; height: 12px;"></div>
+            <span>Tier 2 City (Small)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-circle" style="background: rgba(76, 175, 80, 0.6);"></div>
+            <span>Connections</span>
+        </div>
+        <p style="margin-top: 10px; font-size: 11px; color: #666;">
+            <strong>Click venue:</strong> Blue/orange lines show where artists came from<br/>
+            <strong>Click tier 2:</strong> Green lines show where artists went to perform
+        </p>
+        <p style="margin-top: 8px; font-size: 10px; color: #888;">
+            Marker size = activity level<br/>
+            Hover for city name
+        </p>
+    </div>
+    
+    <script src="sketch_vector.js"></script>
+</body>
+</html>
+

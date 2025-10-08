@@ -1,0 +1,29 @@
+MAP TILE STYLE OPTIONS - Just replace the 'style' value in sketch.js
+
+// 1. OpenStreetMap (Free, Detailed)
+style: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+
+// 2. CartoDB Positron (Free, Clean & Light)
+style: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
+
+// 3. CartoDB Dark Matter (Free, Dark Theme)
+style: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+
+// 4. CartoDB Voyager (Free, Colorful)
+style: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+
+// 5. Stamen Toner (Free, Black & White, Artistic)
+style: 'https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}.png'
+
+// 6. Stamen Terrain (Free, Topographic)
+style: 'https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}.png'
+
+// 7. Stamen Watercolor (Free, Artistic/Painted)
+style: 'https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg'
+
+// 8. ESRI World Street Map (Free, Clean)
+style: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'
+
+// 9. ESRI World Imagery (Free, Satellite)
+style: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+
