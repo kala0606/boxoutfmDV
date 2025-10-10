@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export World Map to SVG</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e0e0ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            color: #a78bfa;
+            text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+        }
+        
+        #container {
+            background: rgba(30, 30, 50, 0.85);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(128, 128, 128, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(128, 128, 128, 0.2);
+            backdrop-filter: blur(20px);
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px 0 rgba(139, 92, 246, 0.3);
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+            box-shadow: 0 6px 20px 0 rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        #preview {
+            margin-top: 20px;
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 8px;
+            background: #15172a;
+            overflow: auto;
+            max-height: 400px;
+        }
+        
+        svg {
+            width: 100%;
+            height: auto;
+        }
+        
+        .instructions {
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #8b5cf6;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>🌍 Export World Map to SVG</h1>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click "Generate SVG" to create the map</li>
+                <li>Click "Download SVG" to save the file</li>
+                <li>Open the SVG file in Adobe Illustrator</li>
+                <li>Edit colors, strokes, and add your custom design elements</li>
+                <li>Replace the world.geojson in your project (or modify the code to use your SVG)</li>
+            </ol>
+        </div>
+        
+        <button id="generateBtn" onclick="generateSVG()">Generate SVG</button>
+        <button id="downloadBtn" onclick="downloadSVG()" style="display: none;">Download SVG</button>
+        
+        <div id="status"></div>
+        <div id="preview"></div>
+    </div>
+
+    <script>
+        let worldGeoJSON;
+        let svgContent = '';
+        
+        // Load the GeoJSON
+        fetch('world.geojson')
+            .then(response => response.json())
+            .then(data => {
+                worldGeoJSON = data;
+                document.getElementById('status').innerHTML = '✅ GeoJSON loaded! Click "Generate SVG" to create the map.';
+            })
+            .catch(error => {
+                document.getElementById('status').innerHTML = '❌ Error loading GeoJSON: ' + error;
+            });
+        
+        function generateSVG() {
+            if (!worldGeoJSON) {
+                alert('GeoJSON not loaded yet!');
+                return;
+            }
+            
+            document.getElementById('status').innerHTML = '⏳ Generating SVG...';
+            
+            // SVG settings
+            const width = 2000;
+            const height = 1000;
+            const centerLat = 20.0;
+            const centerLng = 40.0;
+            const zoom = 20;
+            
+            // Start SVG
+            let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+    <title>World Map - Boxout.fm</title>
+    <desc>World map vector for Boxout.fm data visualization</desc>
+    
+    <!-- Dark background -->
+    <rect width="${width}" height="${height}" fill="#0f172a"/>
+    
+    <!-- Countries group -->
+    <g id="countries">
+`;
+            
+            // Function to convert lat/lng to pixel coordinates
+            function latLngToPixel(lat, lng) {
+                let x = (lng - centerLng) * zoom + width / 2;
+                let y = (centerLat - lat) * zoom + height / 2;
+                return { x, y };
+            }
+            
+            // Draw each country
+            for (let feature of worldGeoJSON.features) {
+                let countryName = feature.properties.name || 'Unknown';
+                svg += `\n        <!-- ${countryName} -->\n`;
+                svg += `        <g id="${countryName.replace(/[^a-zA-Z0-9]/g, '_')}">\n`;
+                
+                let geometry = feature.geometry;
+                
+                if (geometry.type === 'Polygon') {
+                    svg += drawPolygon(geometry.coordinates);
+                } else if (geometry.type === 'MultiPolygon') {
+                    for (let polygon of geometry.coordinates) {
+                        svg += drawPolygon(polygon);
+                    }
+                }
+                
+                svg += `        </g>\n`;
+            }
+            
+            function drawPolygon(coordinates) {
+                let paths = '';
+                for (let ring of coordinates) {
+                    let pathData = '';
+                    for (let i = 0; i < ring.length; i++) {
+                        let pos = latLngToPixel(ring[i][1], ring[i][0]);
+                        if (i === 0) {
+                            pathData += `M ${pos.x},${pos.y} `;
+                        } else {
+                            pathData += `L ${pos.x},${pos.y} `;
+                        }
+                    }
+                    pathData += 'Z';
+                    paths += `            <path d="${pathData}" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>\n`;
+                }
+                return paths;
+            }
+            
+            // Close SVG
+            svg += `    </g>
+    
+    <!-- You can add your custom markers and design elements here in Illustrator -->
+    
+</svg>`;
+            
+            svgContent = svg;
+            
+            // Show preview
+            document.getElementById('preview').innerHTML = svg;
+            document.getElementById('status').innerHTML = '✅ SVG generated! Preview shown below. Click "Download SVG" to save.';
+            document.getElementById('downloadBtn').style.display = 'inline-block';
+        }
+        
+        function downloadSVG() {
+            if (!svgContent) {
+                alert('Generate SVG first!');
+                return;
+            }
+            
+            // Create blob and download
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'world_map_boxout.svg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            document.getElementById('status').innerHTML = '✅ SVG downloaded! Open it in Adobe Illustrator to edit.';
+        }
+    </script>
+</body>
+</html>
+

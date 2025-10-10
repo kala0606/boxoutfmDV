@@ -1,14 +1,23 @@
-// Custom Vector Map for India
-let indiaGeoJSON;
+// Custom Vector Map for World
+let worldGeoJSON;
 let csvData;
-let gigsData = [];
-let cityData = [];
-let tier2CityData = [];
+let artistCities = [];
+let eventsData = [];
+let genresData = [];
+let selectedGenre = 'all';
+let selectedArtist = null;
+
+// New Delhi - The single venue for all events
+const VENUE = {
+    name: 'New Delhi',
+    lat: 28.6139,
+    lng: 77.2090
+};
 
 // Map projection settings
-let centerLat = 22.5;
-let centerLng = 79.0;
-let zoom = 600; // Scale factor
+let centerLat = 20.0;
+let centerLng = 40.0;
+let zoom = 20; // Scale factor (smaller for world view)
 let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
@@ -20,67 +29,115 @@ let hoveredCity = null;
 let pulseAnimation = 0;
 let showLabels = true;
 
-// City coordinates for India
+// World city coordinates
 const cityCoordinates = {
-    // Venue Cities (Metro)
+    // India
+    'New Delhi': { lat: 28.6139, lng: 77.2090 },
     'Mumbai': { lat: 19.0760, lng: 72.8777 },
     'Bangalore': { lat: 12.9716, lng: 77.5946 },
-    'Delhi': { lat: 28.6139, lng: 77.2090 },
-    'Kolkata': { lat: 22.5726, lng: 88.3639 },
-    'Pune': { lat: 18.5204, lng: 73.8567 },
-    'Hyderabad': { lat: 17.3850, lng: 78.4867 },
-    
-    // Tier 2 Cities - North
-    'Jaipur': { lat: 26.9124, lng: 75.7873 },
-    'Chandigarh': { lat: 30.7333, lng: 76.7794 },
-    'Lucknow': { lat: 26.8467, lng: 80.9462 },
-    'Dehradun': { lat: 30.3165, lng: 78.0322 },
-    'Amritsar': { lat: 31.6340, lng: 74.8723 },
-    'Shimla': { lat: 31.1048, lng: 77.1734 },
-    'Udaipur': { lat: 24.5854, lng: 73.7125 },
-    
-    // Tier 2 Cities - West
+    'Bengaluru': { lat: 12.9716, lng: 77.5946 }, // Alternative name for Bangalore
     'Goa': { lat: 15.2993, lng: 74.1240 },
-    'Ahmedabad': { lat: 23.0225, lng: 72.5714 },
-    'Nashik': { lat: 19.9975, lng: 73.7898 },
-    'Nasik': { lat: 19.9975, lng: 73.7898 },
-    'Surat': { lat: 21.1702, lng: 72.8311 },
-    'Vadodara': { lat: 22.3072, lng: 73.1812 },
-    'Nagpur': { lat: 21.1458, lng: 79.0882 },
-    'Indore': { lat: 22.7196, lng: 75.8577 },
-    'Lonavala': { lat: 18.7539, lng: 73.4066 },
-    'Aurangabad': { lat: 19.8762, lng: 75.3433 },
-    
-    // Tier 2 Cities - South
-    'Kochi': { lat: 9.9312, lng: 76.2673 },
-    'Coimbatore': { lat: 11.0168, lng: 76.9558 },
-    'Mysore': { lat: 12.2958, lng: 76.6394 },
-    'Mangalore': { lat: 12.9141, lng: 74.8560 },
-    'Pondicherry': { lat: 11.9416, lng: 79.8083 },
-    'Madurai': { lat: 9.9252, lng: 78.1198 },
-    'Vishakhapatnam': { lat: 17.6869, lng: 83.2185 },
-    'Vijayawada': { lat: 16.5062, lng: 80.6480 },
-    'Tirupati': { lat: 13.6288, lng: 79.4192 },
-    'Warangal': { lat: 17.9689, lng: 79.5941 },
-    'Hubli': { lat: 15.3647, lng: 75.1240 },
-    
-    // Tier 2 Cities - East
-    'Shillong': { lat: 25.5788, lng: 91.8933 },
+    'Goa ': { lat: 15.2993, lng: 74.1240 }, // With space
+    'Chandigarh': { lat: 30.7333, lng: 76.7794 },
+    'Chennai': { lat: 13.0827, lng: 80.2707 },
+    'Kolkata': { lat: 22.5726, lng: 88.3639 },
     'Guwahati': { lat: 26.1445, lng: 91.7362 },
-    'Bhubaneswar': { lat: 20.2961, lng: 85.8245 },
-    'Patna': { lat: 25.5941, lng: 85.1376 },
-    'Ranchi': { lat: 23.3441, lng: 85.3096 },
-    'Darjeeling': { lat: 27.0410, lng: 88.2663 },
-    'Siliguri': { lat: 26.7271, lng: 88.3953 },
-    'Agartala': { lat: 23.8315, lng: 91.2868 },
-    'Cuttack': { lat: 20.5124, lng: 85.8829 },
-    'Raipur': { lat: 21.2514, lng: 81.6296 }
+    'Pune': { lat: 18.5204, lng: 73.8567 },
+    'Jalandhar': { lat: 31.3260, lng: 75.5762 },
+    'Lucknow': { lat: 26.8467, lng: 80.9462 },
+    'Jaipur': { lat: 26.9124, lng: 75.7873 },
+    'Hyderabad': { lat: 17.3850, lng: 78.4867 },
+    'Ahmedabad': { lat: 23.0225, lng: 72.5714 },
+    
+    // USA
+    'New York': { lat: 40.7128, lng: -74.0060 },
+    'New York ': { lat: 40.7128, lng: -74.0060 },
+    'Los Angeles': { lat: 34.0522, lng: -118.2437 },
+    'Chicago': { lat: 41.8781, lng: -87.6298 },
+    'Vancouver': { lat: 49.2827, lng: -123.1207 },
+    'San Francisco': { lat: 37.7749, lng: -122.4194 },
+    'Richmond': { lat: 37.5407, lng: -77.4360 },
+    'New Orleans': { lat: 29.9511, lng: -90.0715 },
+    'Toronto': { lat: 43.6532, lng: -79.3832 },
+    
+    // Europe
+    'London': { lat: 51.5074, lng: -0.1278 },
+    'Berlin': { lat: 52.5200, lng: 13.4050 },
+    'Paris': { lat: 48.8566, lng: 2.3522 },
+    'Amsterdam': { lat: 52.3676, lng: 4.9041 },
+    'Prague': { lat: 50.0755, lng: 14.4378 },
+    'prague ': { lat: 50.0755, lng: 14.4378 },
+    'Tromsø': { lat: 69.6492, lng: 18.9553 },
+    'Bergen': { lat: 60.3913, lng: 5.3221 },
+    'Oslo': { lat: 59.9139, lng: 10.7522 },
+    'Leeds': { lat: 53.8008, lng: -1.5491 },
+    'Leicester': { lat: 52.6369, lng: -1.1398 },
+    'Lancashire': { lat: 53.7632, lng: -2.7044 },
+    'Derry': { lat: 54.9966, lng: -7.3086 },
+    'Bristol': { lat: 51.4545, lng: -2.5879 },
+    'Manchester': { lat: 53.4808, lng: -2.2426 },
+    'Edinburgh': { lat: 55.9533, lng: -3.1883 },
+    'Croydon': { lat: 51.3762, lng: -0.0982 },
+    'Geneva': { lat: 46.2044, lng: 6.1432 },
+    'Lisbon': { lat: 38.7223, lng: -9.1393 },
+    'Milan': { lat: 45.4642, lng: 9.1900 },
+    'Tuscany': { lat: 43.7711, lng: 11.2486 },
+    'Bratislava': { lat: 48.1486, lng: 17.1077 },
+    'Valencia': { lat: 39.4699, lng: -0.3763 },
+    'Łódź': { lat: 51.7592, lng: 19.4560 },
+    
+    // Middle East & Asia
+    'Dubai': { lat: 25.2048, lng: 55.2708 },
+    'Dubai ': { lat: 25.2048, lng: 55.2708 },
+    'Tel Aviv': { lat: 32.0853, lng: 34.7818 },
+    'Doha': { lat: 25.2854, lng: 51.5310 },
+    'Colombo': { lat: 6.9271, lng: 79.8612 },
+    'Kathmandu': { lat: 27.7172, lng: 85.3240 },
+    'Kuala Lumpur': { lat: 3.1390, lng: 101.6869 },
+    
+    // Asia Pacific
+    'Tokyo': { lat: 35.6762, lng: 139.6503 },
+    'Singapore': { lat: 1.3521, lng: 103.8198 },
+    'Bangkok': { lat: 13.7563, lng: 100.5018 },
+    'Seoul': { lat: 37.5665, lng: 126.9780 },
+    'Hong Kong': { lat: 22.3193, lng: 114.1694 },
+    'Sydney': { lat: -33.8688, lng: 151.2093 },
+    'Melbourne': { lat: -37.8136, lng: 144.9631 },
+    'Auckland': { lat: -36.8485, lng: 174.7633 },
+    'Perth': { lat: -31.9505, lng: 115.8605 },
+    'Bali': { lat: -8.3405, lng: 115.0920 },
+    'Manila': { lat: 14.5995, lng: 120.9842 },
+    'Phillipines': { lat: 14.5995, lng: 120.9842 },
+    
+    // Africa
+    'Lagos': { lat: 6.5244, lng: 3.3792 },
+    'Cape Town': { lat: -33.9249, lng: 18.4241 },
+    'Johannesburg': { lat: -26.2041, lng: 28.0473 },
+    'Tunisia': { lat: 33.8869, lng: 9.5375 },
+    
+    // South America
+    'São Paulo': { lat: -23.5505, lng: -46.6333 },
+    'Buenos Aires': { lat: -34.6037, lng: -58.3816 },
+    'Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
+    'Mexico City': { lat: 19.4326, lng: -99.1332 },
+    
+    // Caribbean
+    'Kingston': { lat: 17.9712, lng: -76.7928 },
+    
+    // UK Regions
+    'South Wales': { lat: 51.4816, lng: -3.1791 },
+    'Scotland': { lat: 56.4907, lng: -4.2026 },
+    'Norfolk': { lat: 52.6309, lng: 1.2974 },
+    
+    // Middle East & North Africa
+    'UAE': { lat: 25.2048, lng: 55.2708 },
+    'UAE ': { lat: 25.2048, lng: 55.2708 }
 };
 
 function preload() {
     // Load GeoJSON and CSV data
-    indiaGeoJSON = loadJSON('india.geojson');
-    csvData = loadTable('boxoutimpact.csv', 'csv', 'header');
+    worldGeoJSON = loadJSON('world.geojson');
+    csvData = loadTable('BO.csv', 'csv', 'header');
 }
 
 function setup() {
@@ -94,29 +151,37 @@ function setup() {
 }
 
 function draw() {
-    // Background
-    background(240, 245, 250); // Light blue-grey
+    // Background - Dark gradient
+    background(15, 23, 42); // Dark blue
     
     // Update animation
     pulseAnimation += 0.05;
     
-    // Draw India map
+    // Draw world map
     drawIndiaMap();
     
-    // Draw tier 2 city markers
-    for (let tier2City of tier2CityData) {
-        drawTier2CityMarker(tier2City);
+    // Get filtered artist cities based on selected genre
+    let filteredCities = getFilteredCities();
+    
+    // Draw connections from artist cities to New Delhi
+    for (let city of filteredCities) {
+        if (selectedCity === city || selectedCity === null) {
+            drawConnectionToVenue(city);
+        }
     }
     
-    // Draw connections
-    if (selectedCity) {
-        drawConnections();
+    // Draw artist connections if artist is selected
+    if (selectedArtist) {
+        drawArtistConnection();
     }
     
-    // Draw main venue city markers
-    for (let city of cityData) {
-        drawCityMarker(city);
+    // Draw artist city markers
+    for (let city of filteredCities) {
+        drawArtistCityMarker(city);
     }
+    
+    // Draw New Delhi (venue) marker on top
+    drawVenueMarker();
 }
 
 // Mercator projection: convert lat/lng to pixel coordinates
@@ -130,12 +195,12 @@ function latLngToPixel(lat, lng) {
 function drawIndiaMap() {
     push();
     
-    // Draw each state
-    for (let feature of indiaGeoJSON.features) {
-        // Draw state fill
-        fill(255, 255, 255); // White fill
-        stroke(200, 210, 220); // Light grey borders
-        strokeWeight(1);
+    // Draw each country
+    for (let feature of worldGeoJSON.features) {
+        // Draw country fill - Dark theme
+        fill(30, 41, 59); // Dark blue-grey fill
+        stroke(71, 85, 105); // Lighter grey borders
+        strokeWeight(0.8);
         
         drawFeature(feature);
     }
@@ -167,371 +232,405 @@ function drawPolygon(coordinates) {
 }
 
 function processData() {
-    // First, collect all gigs data
-    for (let i = 0; i < csvData.getRowCount(); i++) {
-        gigsData.push({
-            gigNo: csvData.getString(i, 'Gig No'),
-            venue: csvData.getString(i, 'Venue'),
-            artistCity: csvData.getString(i, 'Artist City'),
-            artistFollowing: parseInt(csvData.getString(i, 'Artist Following')) || 0,
-            venueGathering: parseInt(csvData.getString(i, 'Venue Gathering')) || 0,
-            artist: csvData.getString(i, 'Artist')
-        });
-    }
-    
-    // Aggregate data by venue city
-    const venueCities = ['Mumbai', 'Delhi', 'Bangalore', 'Kolkata', 'Pune', 'Hyderabad'];
     let cityStats = {};
-    let tier2Stats = {};
+    let allGenres = new Set();
     
-    for (let city in cityCoordinates) {
-        if (venueCities.includes(city)) {
-            cityStats[city] = {
-                name: city,
-                lat: cityCoordinates[city].lat,
-                lng: cityCoordinates[city].lng,
-                gigs: new Set(),
-                artists: [],
-                totalGathering: 0,
-                totalFollowers: 0,
-                artistCities: {},
-                gigsList: [],
-                isVenue: true
-            };
-        } else {
-            tier2Stats[city] = {
-                name: city,
-                lat: cityCoordinates[city].lat,
-                lng: cityCoordinates[city].lng,
-                artistCount: 0,
-                venuesPlayedAt: {},
-                artists: [],
-                totalFollowers: 0,
-                isVenue: false
-            };
-        }
-    }
-    
-    // Process each row
-    for (let entry of gigsData) {
-        let venue = entry.venue;
-        let artistCity = entry.artistCity;
+    // Process each row from CSV
+    for (let i = 0; i < csvData.getRowCount(); i++) {
+        let artist = csvData.getString(i, 'Artist ').trim();
+        let eventTitle = csvData.getString(i, 'Event Title');
+        let city = csvData.getString(i, 'City').trim();
+        let country = csvData.getString(i, 'Country ').trim();
+        let genres = csvData.getString(i, 'Genre(s)');
+        let year = csvData.getString(i, 'Year');
         
-        // Track venue city data
-        if (cityStats[venue]) {
-            cityStats[venue].gigs.add(entry.gigNo);
-            cityStats[venue].artists.push(entry.artist);
-            cityStats[venue].totalFollowers += entry.artistFollowing;
+        // Skip empty rows or rows without artist
+        if (!artist || artist === '') continue;
+        
+        // Normalize artist name to handle case variations
+        artist = artist.toLowerCase();
+        
+        // Parse genres
+        let genreList = [];
+        if (genres && genres.trim() !== '') {
+            genreList = genres.split('/').map(g => g.trim().toLowerCase()).filter(g => g);
+            genreList.forEach(g => allGenres.add(g));
+        }
+        
+        // Store event data
+        eventsData.push({
+            artist: artist,
+            eventTitle: eventTitle,
+            city: city,
+            country: country,
+            genres: genreList,
+            year: year
+        });
+        
+        // Aggregate by artist city
+        if (city && city !== '' && city !== 'New Delhi' && cityCoordinates[city]) {
+            if (!cityStats[city]) {
+                cityStats[city] = {
+                    name: city,
+                    country: country,
+                    lat: cityCoordinates[city].lat,
+                    lng: cityCoordinates[city].lng,
+                    artistCount: 0,
+                    artists: [],
+                    events: 0,
+                    genres: {}
+                };
+            }
             
-            if (artistCity) {
-                if (!cityStats[venue].artistCities[artistCity]) {
-                    cityStats[venue].artistCities[artistCity] = 0;
+            cityStats[city].artistCount++;
+            cityStats[city].artists.push(artist);
+            cityStats[city].events++;
+            
+            // Track genres for this city
+            genreList.forEach(genre => {
+                if (!cityStats[city].genres[genre]) {
+                    cityStats[city].genres[genre] = 0;
                 }
-                cityStats[venue].artistCities[artistCity]++;
-            }
-            
-            let gigIndex = cityStats[venue].gigsList.findIndex(g => g.gigNo === entry.gigNo);
-            if (gigIndex === -1) {
-                cityStats[venue].gigsList.push({
-                    gigNo: entry.gigNo,
-                    artists: [entry.artist],
-                    gathering: entry.venueGathering,
-                    totalFollowers: entry.artistFollowing
-                });
-                cityStats[venue].totalGathering += entry.venueGathering;
-            } else {
-                cityStats[venue].gigsList[gigIndex].artists.push(entry.artist);
-                cityStats[venue].gigsList[gigIndex].totalFollowers += entry.artistFollowing;
-            }
-        }
-        
-        // Track tier 2 city data
-        if (tier2Stats[artistCity]) {
-            tier2Stats[artistCity].artistCount++;
-            tier2Stats[artistCity].artists.push(entry.artist);
-            tier2Stats[artistCity].totalFollowers += entry.artistFollowing;
-            
-            if (!tier2Stats[artistCity].venuesPlayedAt[venue]) {
-                tier2Stats[artistCity].venuesPlayedAt[venue] = 0;
-            }
-            tier2Stats[artistCity].venuesPlayedAt[venue]++;
+                cityStats[city].genres[genre]++;
+            });
         }
     }
     
-    // Convert to arrays
+    // Convert to array and calculate unique artists
     for (let city in cityStats) {
         let stats = cityStats[city];
-        stats.gigCount = stats.gigs.size;
         stats.uniqueArtists = [...new Set(stats.artists)].length;
-        stats.avgGathering = stats.gigCount > 0 ? Math.round(stats.totalGathering / stats.gigCount) : 0;
-        cityData.push(stats);
+        artistCities.push(stats);
     }
     
-    for (let city in tier2Stats) {
-        let stats = tier2Stats[city];
-        if (stats.artistCount > 0) {
-            stats.uniqueArtists = [...new Set(stats.artists)].length;
-            stats.venueCount = Object.keys(stats.venuesPlayedAt).length;
-            tier2CityData.push(stats);
-        }
+    // Convert genres set to sorted array
+    genresData = ['all', ...Array.from(allGenres).sort()];
+    
+    // Populate genre dropdown if it exists
+    populateGenreDropdown();
+    
+    // Populate artist dropdown if it exists
+    populateArtistDropdown();
+}
+
+function getFilteredCities() {
+    if (selectedGenre === 'all') {
+        return artistCities;
+    }
+    
+    return artistCities.filter(city => {
+        return city.genres[selectedGenre] > 0;
+    });
+}
+
+function drawVenueMarker() {
+    // Draw New Delhi as the main venue
+    const pos = latLngToPixel(VENUE.lat, VENUE.lng);
+    
+    // Check if mouse is hovering
+    let d = dist(mouseX, mouseY, pos.x, pos.y);
+    let isHovered = d < 30;
+    
+    // Calculate total unique events
+    let uniqueEventTitles = [...new Set(eventsData.map(e => e.eventTitle))];
+    let totalEvents = uniqueEventTitles.length;
+    let filteredEvents = selectedGenre === 'all' ? totalEvents : 
+        uniqueEventTitles.filter(eventTitle => {
+            let eventData = eventsData.find(e => e.eventTitle === eventTitle);
+            return eventData && eventData.genres.includes(selectedGenre);
+        }).length;
+    
+    // Animated size
+    let markerSize = 50 + sin(pulseAnimation) * 8;
+    if (isHovered) {
+        markerSize += 10;
+    }
+    
+    // Draw outer glow
+    noStroke();
+    fill(255, 215, 0, 60);
+    circle(pos.x, pos.y, markerSize + 25);
+    
+    // Draw main marker
+    fill(255, 215, 0, 240);
+    stroke(255);
+    strokeWeight(3);
+    circle(pos.x, pos.y, markerSize);
+    
+    // Draw inner circle
+    fill(139, 92, 246, 200);
+    noStroke();
+    circle(pos.x, pos.y, markerSize * 0.6);
+    
+    // Draw venue icon (star) - removed per user request
+    
+    // Draw label
+    if (showLabels || isHovered) {
+        fill(255);
+        stroke(0);
+        strokeWeight(3);
+        textSize(16);
+        textStyle(BOLD);
+        text('NEW DELHI', pos.x, pos.y - markerSize - 25);
+        
+        textSize(12);
+        textStyle(NORMAL);
+        text(filteredEvents + ' Events', pos.x, pos.y + markerSize + 20);
     }
 }
 
-function drawCityMarker(city) {
+function drawArtistCityMarker(city) {
+    // Convert lat/lng to pixel position
     const pos = latLngToPixel(city.lat, city.lng);
     
+    // Check if mouse is hovering over city
     let d = dist(mouseX, mouseY, pos.x, pos.y);
-    let baseSize = map(city.gigCount, 0, 25, 20, 45);
-    let isHovered = d < baseSize;
+    let baseSize = map(city.artistCount, 1, 50, 8, 25);
+    let isHovered = d < baseSize + 5;
     
     if (isHovered) {
         hoveredCity = city;
     }
     
+    // Determine marker size and color
     let markerSize = baseSize;
     let markerColor;
     
     if (selectedCity === city) {
-        markerSize = baseSize + 10 + sin(pulseAnimation) * 5;
-        markerColor = color(255, 152, 0, 200);
+        markerSize = baseSize + 8 + sin(pulseAnimation) * 4;
+        markerColor = color(236, 72, 153, 240); // Bright pink when selected
     } else if (isHovered) {
-        markerSize = baseSize + 8;
-        markerColor = color(76, 175, 80, 200);
+        markerSize = baseSize + 6;
+        markerColor = color(251, 182, 206, 220); // Light pink on hover
     } else {
-        markerSize = baseSize + sin(pulseAnimation + cityData.indexOf(city)) * 3;
-        markerColor = color(33, 150, 243, 180);
+        markerSize = baseSize + sin(pulseAnimation + artistCities.indexOf(city) * 0.3) * 2;
+        markerColor = color(236, 72, 153, 180); // Pink default
     }
     
-    // Outer glow
+    // Draw outer glow
     noStroke();
-    fill(markerColor.levels[0], markerColor.levels[1], markerColor.levels[2], 50);
-    circle(pos.x, pos.y, markerSize + 15);
+    fill(236, 72, 153, 50);
+    circle(pos.x, pos.y, markerSize + 12);
     
-    // Main marker
+    // Draw main marker
     fill(markerColor);
     stroke(255);
     strokeWeight(2);
     circle(pos.x, pos.y, markerSize);
     
-    // Inner dot
-    fill(255);
+    // Draw inner dot
+    fill(255, 255, 255, 220);
     noStroke();
-    circle(pos.x, pos.y, markerSize * 0.3);
+    circle(pos.x, pos.y, markerSize * 0.4);
     
-    // Gig count
-    fill(0);
-    textAlign(CENTER, CENTER);
-    textSize(markerSize * 0.4);
-    textStyle(BOLD);
-    text(city.gigCount, pos.x, pos.y);
-    
-    // Labels
+    // Draw city label
     if (showLabels || isHovered || selectedCity === city) {
         fill(255);
         stroke(0);
         strokeWeight(3);
-        textSize(14);
-        textStyle(BOLD);
-        text(city.name, pos.x, pos.y - markerSize - 15);
-        
+        textAlign(CENTER, CENTER);
         textSize(11);
+        textStyle(BOLD);
+        text(city.name, pos.x, pos.y - markerSize - 12);
+        
+        // Show artist count
+        textSize(9);
         textStyle(NORMAL);
-        text(city.gigCount + ' gigs', pos.x, pos.y + markerSize + 15);
+        text(city.artistCount + ' artists', pos.x, pos.y + markerSize + 12);
     }
 }
 
-function drawTier2CityMarker(city) {
-    const pos = latLngToPixel(city.lat, city.lng);
+function drawConnectionToVenue(city) {
+    // Draw line from artist city to New Delhi
+    const venuePos = latLngToPixel(VENUE.lat, VENUE.lng);
+    const cityPos = latLngToPixel(city.lat, city.lng);
     
-    let d = dist(mouseX, mouseY, pos.x, pos.y);
-    let baseSize = map(city.artistCount, 1, 20, 6, 12);
-    let isHovered = d < baseSize + 5;
-    
-    let markerSize = baseSize;
-    let markerColor;
+    // Only draw if not the same city
+    if (city.name === VENUE.name) return;
     
     if (selectedCity === city) {
-        markerSize = baseSize + 6 + sin(pulseAnimation) * 3;
-        markerColor = color(255, 193, 7, 220);
-    } else if (isHovered) {
-        markerSize = baseSize + 4;
-        markerColor = color(255, 167, 38, 200);
+        // When selected, draw individual curved lines for each artist
+        drawCurvedArtistLines(city, cityPos, venuePos);
     } else {
-        markerSize = baseSize + sin(pulseAnimation + tier2CityData.indexOf(city) * 0.5) * 1.5;
-        markerColor = color(255, 152, 0, 150);
-    }
-    
-    // Outer glow
-    noStroke();
-    fill(255, 152, 0, 40);
-    circle(pos.x, pos.y, markerSize + 8);
-    
-    // Main marker
-    fill(markerColor);
-    stroke(255);
-    strokeWeight(1);
-    circle(pos.x, pos.y, markerSize);
-    
-    // Inner dot
-    fill(255, 255, 255, 200);
-    noStroke();
-    circle(pos.x, pos.y, markerSize * 0.4);
-    
-    // Labels on hover
-    if (isHovered || selectedCity === city) {
-        fill(255);
-        stroke(0);
-        strokeWeight(3);
-        textAlign(CENTER, CENTER);
-        textSize(10);
-        textStyle(BOLD);
-        text(city.name, pos.x, pos.y - markerSize - 10);
+        // When not selected, draw a single subtle line
+        let opacity = 100;
+        let lineWeight = 2.2;
         
-        textSize(8);
-        textStyle(NORMAL);
-        text(city.artistCount + ' artists', pos.x, pos.y + markerSize + 10);
-    }
-}
-
-function drawConnections() {
-    if (!selectedCity) return;
-    
-    const selectedPos = latLngToPixel(selectedCity.lat, selectedCity.lng);
-    const metroCities = ['Mumbai', 'Delhi', 'Bangalore', 'Kolkata', 'Pune', 'Hyderabad'];
-    
-    if (selectedCity.isVenue) {
-        // VENUE: Show where artists came FROM
-        for (let [cityName, count] of Object.entries(selectedCity.artistCities)) {
-            if (cityCoordinates[cityName] && cityName !== selectedCity.name) {
-                const cityCoord = cityCoordinates[cityName];
-                const pos = latLngToPixel(cityCoord.lat, cityCoord.lng);
-                
-                let isMetro = metroCities.includes(cityName);
-                
-                // Draw line
-                if (isMetro) {
-                    stroke(33, 150, 243, 120);
-                    strokeWeight(2.5);
-                } else {
-                    stroke(255, 152, 0, 100);
-                    strokeWeight(2);
-                }
-                line(selectedPos.x, selectedPos.y, pos.x, pos.y);
-                
-                // Animated dots
-                let dots = 3;
-                for (let i = 0; i < dots; i++) {
-                    let t = (i / dots + pulseAnimation * 0.15) % 1;
-                    let x = lerp(pos.x, selectedPos.x, t);
-                    let y = lerp(pos.y, selectedPos.y, t);
-                    
-                    if (isMetro) {
-                        fill(33, 150, 243, 180);
-                    } else {
-                        fill(255, 152, 0, 180);
-                    }
-                    noStroke();
-                    circle(x, y, 5);
-                }
-                
-                // Small marker
-                drawSmallCityMarker(pos, count, cityName, isMetro);
-            }
-        }
-    } else {
-        // TIER 2: Show where artists went TO
-        for (let [venueName, count] of Object.entries(selectedCity.venuesPlayedAt)) {
-            if (cityCoordinates[venueName]) {
-                const venueCoord = cityCoordinates[venueName];
-                const pos = latLngToPixel(venueCoord.lat, venueCoord.lng);
-                
-                stroke(76, 175, 80, 120);
-                strokeWeight(2.5);
-                line(selectedPos.x, selectedPos.y, pos.x, pos.y);
-                
-                // Animated dots
-                let dots = 3;
-                for (let i = 0; i < dots; i++) {
-                    let t = (i / dots + pulseAnimation * 0.15) % 1;
-                    let x = lerp(selectedPos.x, pos.x, t);
-                    let y = lerp(selectedPos.y, pos.y, t);
-                    
-                    fill(76, 175, 80, 180);
-                    noStroke();
-                    circle(x, y, 5);
-                }
-                
-                drawSmallCityMarker(pos, count, venueName, true);
-            }
+        // Draw connecting line
+        stroke(236, 72, 153, opacity);
+        strokeWeight(lineWeight);
+        line(cityPos.x, cityPos.y, venuePos.x, venuePos.y);
+        
+        // Draw animated dots (flowing from city to New Delhi)
+        let dots = 2;
+        for (let i = 0; i < dots; i++) {
+            let t = (i / dots + pulseAnimation * 0.15) % 1;
+            let x = lerp(cityPos.x, venuePos.x, t);
+            let y = lerp(cityPos.y, venuePos.y, t);
+            
+            fill(236, 72, 153, opacity + 60);
+            noStroke();
+            circle(x, y, 3);
         }
     }
 }
 
-function drawSmallCityMarker(pos, count, cityName, isMetro) {
-    let markerSize = map(count, 1, 10, 8, 16);
+function drawCurvedArtistLines(city, cityPos, venuePos) {
+    // Get unique artists from this city
+    let uniqueArtists = [...new Set(city.artists)];
+    let numArtists = uniqueArtists.length;
     
-    // Outer glow
-    noStroke();
-    if (isMetro) {
-        fill(33, 150, 243, 40);
-    } else {
-        fill(255, 152, 0, 40);
+    // If only one artist, draw a straight line
+    if (numArtists === 1) {
+        stroke(236, 72, 153, 200);
+        strokeWeight(2.5);
+        line(cityPos.x, cityPos.y, venuePos.x, venuePos.y);
+        
+        // Draw animated dots along straight line
+        let dots = 4;
+        for (let i = 0; i < dots; i++) {
+            let t = (i / dots + pulseAnimation * 0.15) % 1;
+            let x = lerp(cityPos.x, venuePos.x, t);
+            let y = lerp(cityPos.y, venuePos.y, t);
+            
+            fill(236, 72, 153, 240);
+            noStroke();
+            circle(x, y, 5);
+        }
+        return;
     }
-    circle(pos.x, pos.y, markerSize + 8);
     
-    // Main marker
-    if (isMetro) {
-        fill(33, 150, 243, 200);
-        stroke(255);
-    } else {
-        fill(255, 152, 0, 200);
-        stroke(255);
+    // For multiple artists, draw mirrored curved lines
+    // Calculate the midpoint between city and venue
+    let midX = (cityPos.x + venuePos.x) / 2;
+    let midY = (cityPos.y + venuePos.y) / 2;
+    
+    // Calculate perpendicular direction for arch spread
+    let dx = venuePos.x - cityPos.x;
+    let dy = venuePos.y - cityPos.y;
+    let distance = dist(cityPos.x, cityPos.y, venuePos.x, venuePos.y);
+    
+    // Perpendicular vector (rotated 90 degrees) - normalized
+    let perpX = -dy / distance;
+    let perpY = dx / distance;
+    
+    // Adaptive base offset based on number of artists and distance
+    // More artists = tighter curves, longer distance = tighter curves
+    let artistFactor = 1 / sqrt(numArtists); // Reduces as artist count increases
+    let distanceFactor = map(distance, 100, 1000, 0.15, 0.08, true); // Tighter for long distances
+    let baseOffset = distance * distanceFactor * artistFactor;
+    
+    // Draw a curved line for each artist
+    for (let i = 0; i < numArtists; i++) {
+        // Create mirrored distribution:
+        // Calculate position relative to center
+        let position;
+        
+        if (numArtists % 2 === 1) {
+            // Odd number: center at 0, others at -2, -1, 1, 2, etc.
+            let centerIndex = floor(numArtists / 2);
+            position = i - centerIndex;
+        } else {
+            // Even number: positions at -1.5, -0.5, 0.5, 1.5, etc.
+            let halfPoint = numArtists / 2;
+            position = i - halfPoint + 0.5;
+        }
+        
+        // Calculate perpendicular offset from the direct line
+        // Positive position = one side, negative = other side
+        let perpendicularOffset = position * baseOffset;
+        
+        // Calculate control point perpendicular to the line
+        let controlX = midX + perpX * perpendicularOffset;
+        let controlY = midY + perpY * perpendicularOffset;
+        
+        // Color variation for each artist line
+        let artistColor = lerpColor(
+            color(236, 72, 153), // Pink
+            color(139, 92, 246), // Purple
+            i / max(1, numArtists - 1)
+        );
+        
+        // Draw the curved line using quadratic bezier
+        noFill();
+        stroke(red(artistColor), green(artistColor), blue(artistColor), 180);
+        strokeWeight(2);
+        
+        // Draw smooth curved line
+        beginShape();
+        for (let t = 0; t <= 1; t += 0.02) {
+            // Quadratic bezier formula
+            let x = pow(1 - t, 2) * cityPos.x + 2 * (1 - t) * t * controlX + pow(t, 2) * venuePos.x;
+            let y = pow(1 - t, 2) * cityPos.y + 2 * (1 - t) * t * controlY + pow(t, 2) * venuePos.y;
+            curveVertex(x, y);
+        }
+        endShape();
+        
+        // Draw animated dots along the curve
+        let dots = 3;
+        for (let j = 0; j < dots; j++) {
+            let t = (j / dots + pulseAnimation * 0.15 + i * 0.1) % 1;
+            
+            // Calculate position on the bezier curve
+            let x = pow(1 - t, 2) * cityPos.x + 2 * (1 - t) * t * controlX + pow(t, 2) * venuePos.x;
+            let y = pow(1 - t, 2) * cityPos.y + 2 * (1 - t) * t * controlY + pow(t, 2) * venuePos.y;
+            
+            fill(red(artistColor), green(artistColor), blue(artistColor), 220);
+            noStroke();
+            circle(x, y, 5);
+        }
     }
-    strokeWeight(1.5);
-    circle(pos.x, pos.y, markerSize);
+}
+
+function drawArtistConnection() {
+    if (!selectedArtist) return;
     
-    // Count
-    fill(255);
-    noStroke();
-    textAlign(CENTER, CENTER);
-    textSize(markerSize * 0.5);
-    textStyle(BOLD);
-    text(count, pos.x, pos.y);
+    // Find all events for the selected artist
+    let artistEvents = eventsData.filter(e => e.artist === selectedArtist);
     
-    // Label on hover
-    let d = dist(mouseX, mouseY, pos.x, pos.y);
-    if (d < markerSize || d < 15) {
-        fill(255);
-        stroke(0);
-        strokeWeight(3);
-        textSize(11);
-        textStyle(NORMAL);
-        text(cityName, pos.x, pos.y - markerSize - 8);
+    for (let event of artistEvents) {
+        if (event.city && cityCoordinates[event.city]) {
+            const cityPos = latLngToPixel(cityCoordinates[event.city].lat, cityCoordinates[event.city].lng);
+            const venuePos = latLngToPixel(VENUE.lat, VENUE.lng);
+            
+            // Draw golden line for selected artist
+            stroke(255, 215, 0, 200);
+            strokeWeight(3);
+            line(cityPos.x, cityPos.y, venuePos.x, venuePos.y);
+            
+            // Draw animated dots (golden)
+            let dots = 5;
+            for (let i = 0; i < dots; i++) {
+                let t = (i / dots + pulseAnimation * 0.2) % 1;
+                let x = lerp(cityPos.x, venuePos.x, t);
+                let y = lerp(cityPos.y, venuePos.y, t);
+                
+                fill(255, 215, 0, 240);
+                noStroke();
+                circle(x, y, 6);
+            }
+        }
     }
 }
 
 function mousePressed() {
-    // Check venue cities
-    for (let city of cityData) {
-        const pos = latLngToPixel(city.lat, city.lng);
-        let d = dist(mouseX, mouseY, pos.x, pos.y);
-        
-        if (d < 25) {
-            selectedCity = selectedCity === city ? null : city;
-            updateInfoPanel(city);
-            return;
-        }
+    // Check if clicking on New Delhi venue
+    const venuePos = latLngToPixel(VENUE.lat, VENUE.lng);
+    let d = dist(mouseX, mouseY, venuePos.x, venuePos.y);
+    if (d < 30) {
+        updateVenueInfo();
+        return;
     }
     
-    // Check tier 2 cities
-    for (let tier2City of tier2CityData) {
-        const pos = latLngToPixel(tier2City.lat, tier2City.lng);
-        let baseSize = map(tier2City.artistCount, 1, 20, 6, 12);
+    // Check artist cities
+    for (let city of artistCities) {
+        const pos = latLngToPixel(city.lat, city.lng);
+        let baseSize = map(city.artistCount, 1, 50, 8, 25);
         let d = dist(mouseX, mouseY, pos.x, pos.y);
         
         if (d < baseSize + 5) {
-            selectedCity = selectedCity === tier2City ? null : tier2City;
-            updateInfoPanel(tier2City);
+            selectedCity = selectedCity === city ? null : city;
+            updateInfoPanel(city);
             return;
         }
     }
@@ -542,10 +641,8 @@ function mousePressed() {
     lastMouseY = mouseY;
     
     // Clear selection if clicked elsewhere
-    if (!isDragging) {
-        selectedCity = null;
-        updateInfoPanel(null);
-    }
+    selectedCity = null;
+    updateInfoPanel(null);
 }
 
 function mouseReleased() {
@@ -563,20 +660,30 @@ function mouseDragged() {
 
 function mouseWheel(event) {
     // Zoom with scroll
-    let zoomChange = -event.delta * 0.5;
+    let zoomChange = -event.delta * 0.3;
     zoom += zoomChange;
-    zoom = constrain(zoom, 200, 2000);
+    zoom = constrain(zoom, 10, 500);
     return false; // Prevent page scrolling
 }
 
 function mouseMoved() {
     hoveredCity = null;
     
-    for (let city of cityData) {
+    // Check venue
+    const venuePos = latLngToPixel(VENUE.lat, VENUE.lng);
+    let d = dist(mouseX, mouseY, venuePos.x, venuePos.y);
+    if (d < 30) {
+        cursor(HAND);
+        return;
+    }
+    
+    // Check artist cities
+    for (let city of artistCities) {
         const pos = latLngToPixel(city.lat, city.lng);
+        let baseSize = map(city.artistCount, 1, 50, 8, 25);
         let d = dist(mouseX, mouseY, pos.x, pos.y);
         
-        if (d < 25) {
+        if (d < baseSize + 5) {
             hoveredCity = city;
             cursor(HAND);
             return;
@@ -586,87 +693,150 @@ function mouseMoved() {
     cursor(ARROW);
 }
 
+function updateVenueInfo() {
+    const infoDiv = document.getElementById('city-info');
+    
+    // Calculate total unique events
+    let uniqueEventTitles = [...new Set(eventsData.map(e => e.eventTitle))];
+    let totalEvents = uniqueEventTitles.length;
+    let filteredEvents = selectedGenre === 'all' ? totalEvents : 
+        uniqueEventTitles.filter(eventTitle => {
+            let eventData = eventsData.find(e => e.eventTitle === eventTitle);
+            return eventData && eventData.genres.includes(selectedGenre);
+        }).length;
+    
+    let allArtists = eventsData.map(e => e.artist);
+    let uniqueArtists = [...new Set(allArtists)].length;
+    
+    // Count cities
+    let cityCount = artistCities.length;
+    
+    // Get top genres
+    let genreCounts = {};
+    eventsData.forEach(e => {
+        e.genres.forEach(genre => {
+            genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+        });
+    });
+    let topGenres = Object.entries(genreCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+    
+    let genresHtml = topGenres.map(([genre, count]) => 
+        `<span style="display: inline-block; margin: 3px 5px 3px 0; padding: 3px 8px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; font-size: 11px; color: #e0e0ff;">${genre} (${count})</span>`
+    ).join('');
+    
+    infoDiv.innerHTML = `
+        <p class="city-name">New Delhi</p>
+        <p style="font-size: 12px; color: #ffd700; margin-top: 5px;">★ Main Venue</p>
+        <p><strong>Total Events:</strong> ${filteredEvents}</p>
+        <p><strong>Total Artists:</strong> ${allArtists.length}</p>
+        <p><strong>Unique Artists:</strong> ${uniqueArtists}</p>
+        <p><strong>Cities Represented:</strong> ${cityCount}</p>
+        <p><strong>Top Genres:</strong><br/>${genresHtml}</p>
+    `;
+}
+
 function updateInfoPanel(city) {
     const infoDiv = document.getElementById('city-info');
     
     if (city) {
-        if (city.isVenue) {
-            // VENUE CITY INFO
-            let artistCitiesHtml = '';
-            let sortedCities = Object.entries(city.artistCities)
-                .sort((a, b) => b[1] - a[1]);
-            
-            const metroCities = ['Mumbai', 'Delhi', 'Bangalore', 'Kolkata', 'Pune', 'Hyderabad'];
-            let metroList = [];
-            let tier2List = [];
-            
-            for (let [cityName, count] of sortedCities) {
-                if (metroCities.includes(cityName)) {
-                    metroList.push([cityName, count]);
-                } else {
-                    tier2List.push([cityName, count]);
-                }
-            }
-            
-            if (metroList.length > 0) {
-                artistCitiesHtml += '<div style="margin-bottom: 8px;"><strong style="font-size: 11px; color: #666;">Metro Cities:</strong><br/>';
-                for (let [cityName, count] of metroList) {
-                    artistCitiesHtml += `<span style="display: inline-block; margin: 3px 5px 3px 0; padding: 3px 8px; background: #e3f2fd; border-radius: 12px; font-size: 11px;">${cityName} (${count})</span>`;
-                }
-                artistCitiesHtml += '</div>';
-            }
-            
-            if (tier2List.length > 0) {
-                artistCitiesHtml += '<div><strong style="font-size: 11px; color: #666;">Tier 2 Cities:</strong><br/>';
-                for (let [cityName, count] of tier2List) {
-                    artistCitiesHtml += `<span style="display: inline-block; margin: 3px 5px 3px 0; padding: 3px 8px; background: #fff3e0; border-radius: 12px; font-size: 11px;">${cityName} (${count})</span>`;
-                }
-                artistCitiesHtml += '</div>';
-            }
-            
-            infoDiv.innerHTML = `
-                <p class="city-name">${city.name}</p>
-                <p style="font-size: 12px; color: #666; margin-top: 5px;">Venue City</p>
-                <p><strong>Total Gigs:</strong> ${city.gigCount}</p>
-                <p><strong>Total Artists:</strong> ${city.artists.length}</p>
-                <p><strong>Unique Artists:</strong> ${city.uniqueArtists}</p>
-                <p><strong>Avg. Gathering:</strong> ${city.avgGathering} people</p>
-                <p><strong>Total Followers:</strong> ${city.totalFollowers.toLocaleString()}</p>
-                <p><strong>Artists From:</strong><br/>${artistCitiesHtml}</p>
-            `;
-        } else {
-            // TIER 2 CITY INFO
-            let venuesHtml = '';
-            let sortedVenues = Object.entries(city.venuesPlayedAt)
-                .sort((a, b) => b[1] - a[1]);
-            
-            for (let [venueName, count] of sortedVenues) {
-                venuesHtml += `<span style="display: inline-block; margin: 3px 5px 3px 0; padding: 3px 8px; background: #e8f5e9; border-radius: 12px; font-size: 11px;">${venueName} (${count})</span>`;
-            }
-            
-            infoDiv.innerHTML = `
-                <p class="city-name">${city.name}</p>
-                <p style="font-size: 12px; color: #ff9800; margin-top: 5px;">Tier 2 City</p>
-                <p><strong>Artists From Here:</strong> ${city.artistCount}</p>
-                <p><strong>Unique Artists:</strong> ${city.uniqueArtists}</p>
-                <p><strong>Total Followers:</strong> ${city.totalFollowers.toLocaleString()}</p>
-                <p><strong>Venues Played At:</strong> ${city.venueCount}</p>
-                <p><strong>Venue List:</strong><br/>${venuesHtml}</p>
-            `;
+        // Get artists from this city
+        let cityArtists = eventsData.filter(e => e.city === city.name);
+        let artistNames = [...new Set(cityArtists.map(e => e.artist))].join(', ');
+        
+        // Get genres for this city
+        let genreHtml = '';
+        let sortedGenres = Object.entries(city.genres)
+            .sort((a, b) => b[1] - a[1]);
+        
+        for (let [genre, count] of sortedGenres) {
+            genreHtml += `<span style="display: inline-block; margin: 3px 5px 3px 0; padding: 3px 8px; background: rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; font-size: 11px; color: #fbbf24;">${genre} (${count})</span>`;
         }
+        
+        infoDiv.innerHTML = `
+            <p class="city-name">${city.name}</p>
+            <p style="font-size: 12px; color: #ec4899; margin-top: 5px;">${city.country}</p>
+            <p><strong>Artists:</strong> ${city.artistCount}</p>
+            <p><strong>Unique Artists:</strong> ${city.uniqueArtists}</p>
+            <p><strong>Events:</strong> ${city.events}</p>
+            ${genreHtml ? `<p><strong>Genres:</strong><br/>${genreHtml}</p>` : ''}
+            <p style="font-size: 11px; margin-top: 10px;"><strong>Artists:</strong><br/>${artistNames}</p>
+        `;
     } else {
         infoDiv.innerHTML = '';
     }
 }
 
+function populateGenreDropdown() {
+    // Check if dropdown exists
+    const dropdown = document.getElementById('genre-dropdown');
+    if (!dropdown) return;
+    
+    // Clear existing options
+    dropdown.innerHTML = '';
+    
+    // Add genres
+    genresData.forEach(genre => {
+        let option = document.createElement('option');
+        option.value = genre;
+        option.text = genre === 'all' ? 'All Genres' : genre.charAt(0).toUpperCase() + genre.slice(1);
+        dropdown.appendChild(option);
+    });
+    
+    // Add event listener
+    dropdown.addEventListener('change', function() {
+        selectedGenre = this.value;
+        selectedCity = null;
+        updateInfoPanel(null);
+    });
+}
+
+function populateArtistDropdown() {
+    // Check if dropdown exists
+    const dropdown = document.getElementById('artist-dropdown');
+    if (!dropdown) return;
+    
+    // Get all unique artists sorted alphabetically
+    let allArtists = [...new Set(eventsData.map(e => e.artist))].sort();
+    
+    // Clear existing options
+    dropdown.innerHTML = '<option value="">-- Select Artist --</option>';
+    
+    // Add artists
+    allArtists.forEach(artist => {
+        let option = document.createElement('option');
+        option.value = artist;
+        option.text = artist;
+        dropdown.appendChild(option);
+    });
+    
+    // Add event listener
+    dropdown.addEventListener('change', function() {
+        selectedArtist = this.value || null;
+        if (selectedArtist) {
+            // Find the artist's city and show info
+            let artistEvent = eventsData.find(e => e.artist === selectedArtist);
+            if (artistEvent && artistEvent.city) {
+                let city = artistCities.find(c => c.name === artistEvent.city);
+                if (city) {
+                    selectedCity = city;
+                    updateInfoPanel(city);
+                }
+            }
+        }
+    });
+}
+
 function setupControls() {
     document.getElementById('reset-btn').addEventListener('click', () => {
-        zoom = 600;
+        zoom = 5;
         offsetX = 0;
         offsetY = 0;
-        centerLat = 22.5;
-        centerLng = 79.0;
+        centerLat = 20.0;
+        centerLng = 40.0;
         selectedCity = null;
+        selectedArtist = null;
         updateInfoPanel(null);
     });
     
@@ -682,12 +852,13 @@ function windowResized() {
 
 function keyPressed() {
     if (key === 'r' || key === 'R') {
-        zoom = 600;
+        zoom = 20;
         offsetX = 0;
         offsetY = 0;
-        centerLat = 22.5;
-        centerLng = 79.0;
+        centerLat = 20.0;
+        centerLng = 40.0;
         selectedCity = null;
+        selectedArtist = null;
         updateInfoPanel(null);
     } else if (key === 'l' || key === 'L') {
         showLabels = !showLabels;
