@@ -26,6 +26,10 @@ let hasDragged = false;
 let clickedOnInteractive = false;
 let lastMouseX, lastMouseY;
 
+// Pinch zoom variables
+let lastPinchDist = 0;
+let isPinching = false;
+
 // Visualization settings
 let selectedCity = null;
 let hoveredCity = null;
@@ -889,6 +893,18 @@ function touchStarted() {
         }
     }
     
+    // Check for multi-touch (pinch zoom)
+    if (touches.length === 2) {
+        isPinching = true;
+        isDragging = false;
+        // Calculate initial distance between two touches
+        let touch1 = touches[0];
+        let touch2 = touches[1];
+        lastPinchDist = dist(touch1.x, touch1.y, touch2.x, touch2.y);
+        return false;
+    }
+    
+    isPinching = false;
     handlePress();
     return false; // Prevent default behavior on map
 }
@@ -914,6 +930,12 @@ function touchEnded() {
             mouseY >= rect.top && mouseY <= rect.bottom) {
             return true; // Allow default behavior on panel
         }
+    }
+    
+    // Reset pinch state when touches end
+    if (touches.length < 2) {
+        isPinching = false;
+        lastPinchDist = 0;
     }
     
     handleRelease();
@@ -960,6 +982,32 @@ function touchMoved() {
         }
     }
     
+    // Handle pinch zoom
+    if (touches.length === 2 && isPinching) {
+        let touch1 = touches[0];
+        let touch2 = touches[1];
+        let currentDist = dist(touch1.x, touch1.y, touch2.x, touch2.y);
+        
+        if (lastPinchDist > 0) {
+            // Calculate zoom change based on distance change
+            let distChange = currentDist - lastPinchDist;
+            let zoomChange = distChange * 0.1; // Adjust sensitivity
+            
+            zoom += zoomChange;
+            zoom = constrain(zoom, 10, 500);
+            
+            // Apply constraints to offset after zoom
+            let maxOffsetX = zoom * 150;
+            let maxOffsetY = zoom * 50;
+            offsetX = constrain(offsetX, -maxOffsetX, maxOffsetX);
+            offsetY = constrain(offsetY, -maxOffsetY, maxOffsetY);
+        }
+        
+        lastPinchDist = currentDist;
+        return false;
+    }
+    
+    // Single touch - handle dragging
     handleDrag();
     return false; // Prevent default behavior on map
 }
