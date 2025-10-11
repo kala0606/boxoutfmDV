@@ -23,6 +23,7 @@ let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
 let hasDragged = false;
+let clickedOnInteractive = false;
 let lastMouseX, lastMouseY;
 
 // Visualization settings
@@ -804,13 +805,16 @@ function mousePressed() {
         }
     }
     
-    // Reset drag flag
+    // Reset flags
     hasDragged = false;
+    clickedOnInteractive = false;
     
     // Check if clicking on New Delhi venue
     const venuePos = latLngToPixel(VENUE.lat, VENUE.lng);
     let d = dist(mouseX, mouseY, venuePos.x, venuePos.y);
     if (d < 30) {
+        clickedOnInteractive = true; // Mark that we clicked on something interactive
+        
         // Spawn firecracker particles from New Delhi
         spawnParticles(venuePos.x, venuePos.y, 50);
         
@@ -841,6 +845,8 @@ function mousePressed() {
         let d = dist(mouseX, mouseY, pos.x, pos.y);
         
         if (d < baseSize + 5) {
+            clickedOnInteractive = true; // Mark that we clicked on something interactive
+            
             // Clear artist and genre selections
             selectedArtist = null;
             selectedGenre = 'all';
@@ -865,8 +871,8 @@ function mousePressed() {
 }
 
 function mouseReleased() {
-    // Only clear selections if we clicked (no drag) on empty space
-    if (!hasDragged && isDragging) {
+    // Only clear selections if we clicked (no drag) on empty space (not on interactive elements)
+    if (!hasDragged && !clickedOnInteractive && isDragging) {
         // Check if mouse is over the left panel - don't process
         const panel = document.getElementById('main-panel');
         if (panel) {
@@ -874,6 +880,7 @@ function mouseReleased() {
             if (mouseX >= rect.left && mouseX <= rect.right && 
                 mouseY >= rect.top && mouseY <= rect.bottom) {
                 isDragging = false;
+                clickedOnInteractive = false;
                 return; // Click is on panel, ignore
             }
         }
@@ -895,6 +902,7 @@ function mouseReleased() {
     
     isDragging = false;
     hasDragged = false;
+    clickedOnInteractive = false;
 }
 
 function mouseDragged() {
