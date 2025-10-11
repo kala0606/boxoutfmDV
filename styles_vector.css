@@ -19,7 +19,7 @@ body {
 /* Canvas - The p5.js drawing area */
 canvas {
     display: block;
-    touch-action: none; /* Prevent default touch on canvas only */
+    touch-action: manipulation; /* Allow touch gestures but prevent double-tap zoom */
 }
 
 

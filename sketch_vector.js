@@ -894,13 +894,16 @@ function touchStarted() {
     }
     
     // Check for multi-touch (pinch zoom)
-    if (touches.length === 2) {
+    if (touches && touches.length === 2) {
         isPinching = true;
         isDragging = false;
+        hasDragged = false;
+        clickedOnInteractive = true; // Prevent reset on release
         // Calculate initial distance between two touches
         let touch1 = touches[0];
         let touch2 = touches[1];
         lastPinchDist = dist(touch1.x, touch1.y, touch2.x, touch2.y);
+        console.log('Pinch started, distance:', lastPinchDist);
         return false;
     }
     
@@ -933,7 +936,10 @@ function touchEnded() {
     }
     
     // Reset pinch state when touches end
-    if (touches.length < 2) {
+    if (!touches || touches.length < 2) {
+        if (isPinching) {
+            console.log('Pinch ended');
+        }
         isPinching = false;
         lastPinchDist = 0;
     }
@@ -983,7 +989,7 @@ function touchMoved() {
     }
     
     // Handle pinch zoom
-    if (touches.length === 2 && isPinching) {
+    if (touches && touches.length === 2 && isPinching) {
         let touch1 = touches[0];
         let touch2 = touches[1];
         let currentDist = dist(touch1.x, touch1.y, touch2.x, touch2.y);
@@ -993,8 +999,11 @@ function touchMoved() {
             let distChange = currentDist - lastPinchDist;
             let zoomChange = distChange * 0.1; // Adjust sensitivity
             
+            let oldZoom = zoom;
             zoom += zoomChange;
             zoom = constrain(zoom, 10, 500);
+            
+            console.log('Pinching: old zoom:', oldZoom.toFixed(1), 'new zoom:', zoom.toFixed(1));
             
             // Apply constraints to offset after zoom
             let maxOffsetX = zoom * 150;
