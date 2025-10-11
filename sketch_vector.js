@@ -879,8 +879,18 @@ function handlePress() {
 
 // Add explicit touch support
 function touchStarted() {
+    // Check if touch is on the panel - allow default scrolling
+    const panel = document.getElementById('main-panel');
+    if (panel) {
+        const rect = panel.getBoundingClientRect();
+        if (mouseX >= rect.left && mouseX <= rect.right && 
+            mouseY >= rect.top && mouseY <= rect.bottom) {
+            return true; // Allow default scrolling on panel
+        }
+    }
+    
     handlePress();
-    return false; // Prevent default behavior
+    return false; // Prevent default behavior on map
 }
 
 function mouseReleased() {
@@ -896,8 +906,18 @@ function handleRelease() {
 
 // Add explicit touch end support
 function touchEnded() {
+    // Check if touch is on the panel - allow default scrolling
+    const panel = document.getElementById('main-panel');
+    if (panel) {
+        const rect = panel.getBoundingClientRect();
+        if (mouseX >= rect.left && mouseX <= rect.right && 
+            mouseY >= rect.top && mouseY <= rect.bottom) {
+            return true; // Allow default behavior on panel
+        }
+    }
+    
     handleRelease();
-    return false; // Prevent default behavior
+    return false; // Prevent default behavior on map
 }
 
 function mouseDragged() {
@@ -930,8 +950,18 @@ function handleDrag() {
 
 // Add explicit touch move support
 function touchMoved() {
+    // Check if touch is on the panel - allow default scrolling
+    const panel = document.getElementById('main-panel');
+    if (panel) {
+        const rect = panel.getBoundingClientRect();
+        if (mouseX >= rect.left && mouseX <= rect.right && 
+            mouseY >= rect.top && mouseY <= rect.bottom) {
+            return true; // Allow default scrolling on panel
+        }
+    }
+    
     handleDrag();
-    return false; // Prevent default behavior
+    return false; // Prevent default behavior on map
 }
 
 function mouseWheel(event) {
