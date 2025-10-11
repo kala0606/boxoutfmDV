@@ -19,6 +19,7 @@ body {
 /* Canvas - The p5.js drawing area */
 canvas {
     display: block;
+    touch-action: none; /* Prevent default touch on canvas only */
 }
 
 
@@ -53,6 +54,10 @@ canvas {
     /* Scrolling */
     overflow-y: auto;
     overflow-x: hidden;
+    
+    /* Enable touch scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     
     z-index: 1000;
 }
