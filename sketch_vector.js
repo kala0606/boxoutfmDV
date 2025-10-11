@@ -888,35 +888,7 @@ function mouseReleased() {
 }
 
 function handleRelease() {
-    // Only clear selections if we clicked (no drag) on empty space (not on interactive elements)
-    if (!hasDragged && !clickedOnInteractive && isDragging) {
-        // Check if mouse is over the left panel - don't process
-        const panel = document.getElementById('main-panel');
-        if (panel) {
-            const rect = panel.getBoundingClientRect();
-            if (mouseX >= rect.left && mouseX <= rect.right && 
-                mouseY >= rect.top && mouseY <= rect.bottom) {
-                isDragging = false;
-                clickedOnInteractive = false;
-                return; // Click is on panel, ignore
-            }
-        }
-        
-        // Clear all selections and reset everything
-        selectedCity = null;
-        selectedArtist = null;
-        selectedGenre = 'all';
-        
-        // Reset dropdowns
-        const artistDropdown = document.getElementById('artist-dropdown');
-        if (artistDropdown) artistDropdown.value = '';
-        const genreDropdown = document.getElementById('genre-dropdown');
-        if (genreDropdown) genreDropdown.value = 'all';
-        
-        // Update info panel to show default view
-        updateGenreInfoPanel();
-    }
-    
+    // Just reset the drag flags - don't clear selections
     isDragging = false;
     hasDragged = false;
     clickedOnInteractive = false;
