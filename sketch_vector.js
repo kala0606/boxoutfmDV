@@ -6,6 +6,7 @@ let eventsData = [];
 let genresData = [];
 let selectedGenre = 'all';
 let selectedArtist = null;
+let countryStats = {};
 
 // New Delhi - The single venue for all events
 const VENUE = {
@@ -17,10 +18,11 @@ const VENUE = {
 // Map projection settings
 let centerLat = 20.0;
 let centerLng = 40.0;
-let zoom = 20; // Scale factor (smaller for world view)
+let zoom = 10; // Scale factor (smaller for world view)
 let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
+let hasDragged = false;
 let lastMouseX, lastMouseY;
 
 // Visualization settings
@@ -28,6 +30,9 @@ let selectedCity = null;
 let hoveredCity = null;
 let pulseAnimation = 0;
 let showLabels = true;
+
+// Particle system
+let particles = [];
 
 // World city coordinates
 const cityCoordinates = {
@@ -134,6 +139,82 @@ const cityCoordinates = {
     'UAE ': { lat: 25.2048, lng: 55.2708 }
 };
 
+// Particle class for firecracker burst animation
+class Particle {
+    constructor(x, y) {
+        this.position = createVector(x, y);
+        // Random burst in all 360 directions
+        let angle = random(TWO_PI);
+        let speed = random(3, 8);
+        this.velocity = createVector(cos(angle) * speed, sin(angle) * speed);
+        this.birthTime = millis();
+        this.lifetime = random(2000, 4000); // Live for 2-4 seconds
+        this.size = random(3, 7);
+        // Random pink or purple color
+        this.color = random() > 0.5 ? color(236, 72, 153) : color(168, 85, 247); // pink or purple
+    }
+    
+    update() {
+        // Simple movement - just add velocity
+        this.position.add(this.velocity);
+    }
+    
+    display() {
+        // Calculate opacity based on lifetime - fade out
+        let age = millis() - this.birthTime;
+        let opacity = map(age, 0, this.lifetime, 255, 0);
+        opacity = constrain(opacity, 0, 255);
+        
+        // Draw particle as a small square
+        push();
+        translate(this.position.x, this.position.y);
+        
+        // Apply color with opacity
+        let c = color(red(this.color), green(this.color), blue(this.color), opacity);
+        fill(c);
+        noStroke();
+        rectMode(CENTER);
+        square(0, 0, this.size);
+        
+        pop();
+    }
+    
+    isDead() {
+        return millis() - this.birthTime > this.lifetime;
+    }
+}
+
+function spawnParticles(x, y, count = 50) {
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle(x, y));
+    }
+}
+
+// Function to draw gradient lines from yellow to purple
+function drawGradientLine(x1, y1, x2, y2, weight, opacity) {
+    let steps = 20; // Number of gradient segments
+    
+    for (let i = 0; i < steps; i++) {
+        let t1 = i / steps; // Current segment start
+        let t2 = (i + 1) / steps; // Current segment end
+        
+        // Calculate positions for this segment
+        let x1_seg = lerp(x1, x2, t1);
+        let y1_seg = lerp(y1, y2, t1);
+        let x2_seg = lerp(x1, x2, t2);
+        let y2_seg = lerp(y1, y2, t2);
+        
+        // Interpolate color from yellow to purple based on segment position
+        let r = lerp(255, 139, t1); // 255->139 (yellow to purple red)
+        let g = lerp(255, 92, t1);  // 255->92 (yellow to purple green) 
+        let b = lerp(0, 246, t1);   // 0->246 (yellow to purple blue)
+        
+        stroke(r, g, b, opacity);
+        strokeWeight(weight);
+        line(x1_seg, y1_seg, x2_seg, y2_seg);
+    }
+}
+
 function preload() {
     // Load GeoJSON and CSV data
     worldGeoJSON = loadJSON('world.geojson');
@@ -143,16 +224,22 @@ function preload() {
 function setup() {
     createCanvas(windowWidth, windowHeight);
     
+    // Shift map 15% to the right to visually center it (more ocean on right than left)
+    offsetX = width * 0.25;
+    
     // Process CSV data
     processData();
     
     // Setup UI controls
     setupControls();
+    
+    // Initialize the info panel with default view (all genres)
+    updateGenreInfoPanel();
 }
 
 function draw() {
-    // Background - Dark gradient
-    background(15, 23, 42); // Dark blue
+    // Background - Near black (ocean)
+    background(10, 10, 10); // Near black
     
     // Update animation
     pulseAnimation += 0.05;
@@ -163,16 +250,26 @@ function draw() {
     // Get filtered artist cities based on selected genre
     let filteredCities = getFilteredCities();
     
-    // Draw connections from artist cities to New Delhi
-    for (let city of filteredCities) {
-        if (selectedCity === city || selectedCity === null) {
+    // Only one visualization mode at a time:
+    // Priority: Artist > New Delhi All > City > Genre
+    
+    if (selectedArtist) {
+        // Artist mode: Show only artist connection and circles
+        drawConcentricCircles();
+        drawArtistConnection();
+    } else if (selectedCity === 'NEW_DELHI_ALL') {
+        // Show all connections when New Delhi is clicked
+        for (let city of filteredCities) {
             drawConnectionToVenue(city);
         }
-    }
-    
-    // Draw artist connections if artist is selected
-    if (selectedArtist) {
-        drawArtistConnection();
+    } else if (selectedCity && selectedCity !== 'NEW_DELHI_ALL') {
+        // City mode: Show only selected city connection
+        drawConnectionToVenue(selectedCity);
+    } else if (selectedGenre !== 'all') {
+        // Genre mode: Show all cities for that genre
+        for (let city of filteredCities) {
+            drawConnectionToVenue(city);
+        }
     }
     
     // Draw artist city markers
@@ -182,6 +279,15 @@ function draw() {
     
     // Draw New Delhi (venue) marker on top
     drawVenueMarker();
+    
+    // Update and draw particles
+    for (let particle of particles) {
+        particle.update();
+        particle.display();
+    }
+    
+    // Remove dead particles
+    particles = particles.filter(particle => !particle.isDead());
 }
 
 // Mercator projection: convert lat/lng to pixel coordinates
@@ -195,11 +301,49 @@ function latLngToPixel(lat, lng) {
 function drawIndiaMap() {
     push();
     
+    // Find max artist count for normalization
+    let maxArtists = 0;
+    for (let country in countryStats) {
+        maxArtists = max(maxArtists, countryStats[country].artistCount);
+    }
+    
     // Draw each country
     for (let feature of worldGeoJSON.features) {
-        // Draw country fill - Dark theme
-        fill(30, 41, 59); // Dark blue-grey fill
-        stroke(71, 85, 105); // Lighter grey borders
+        let countryName = feature.properties.NAME || feature.properties.name || feature.properties.NAME_EN || feature.properties.NAME_0 || feature.properties.ADMIN;
+        
+        // Map GeoJSON country names to CSV country names
+        let countryMapping = {
+            'United States of America': 'United States',
+            'United Kingdom': 'United Kingdom',
+            'India': 'India'
+        };
+        
+        // Check if we need to map the country name
+        let csvCountryName = countryMapping[countryName] || countryName;
+        
+        // Default very dark grey fill for land
+        let fillColor = color(25, 25, 28); // Very dark grey
+        
+        // Check if this country has artist data
+        if (countryStats[csvCountryName] && countryStats[csvCountryName].artistCount > 0) {
+            // Use logarithmic scale to make differences more noticeable
+            // Cap at 50 artists so countries with fewer artists show more distinction
+            let cappedMax = min(maxArtists, 50);
+            let artistCount = min(countryStats[csvCountryName].artistCount, cappedMax);
+            
+            // Use log scale for better visual distribution
+            let logCount = log(artistCount + 1);
+            let logMax = log(cappedMax + 1);
+            let intensity = map(logCount, 0, logMax, 0.2, 1);
+            intensity = constrain(intensity, 0.2, 1);
+            
+            // Use purple color (139, 92, 246) with varying alpha
+            let alpha = int(intensity * 200); // Alpha from ~40 to 200
+            fillColor = color(139, 92, 246, alpha);
+        }
+        
+        fill(fillColor);
+        stroke(10, 10, 12); // Same as ocean (near black)
         strokeWeight(0.8);
         
         drawFeature(feature);
@@ -237,10 +381,10 @@ function processData() {
     
     // Process each row from CSV
     for (let i = 0; i < csvData.getRowCount(); i++) {
-        let artist = csvData.getString(i, 'Artist ').trim();
+        let artist = csvData.getString(i, 'Artist').trim();
         let eventTitle = csvData.getString(i, 'Event Title');
         let city = csvData.getString(i, 'City').trim();
-        let country = csvData.getString(i, 'Country ').trim();
+        let country = csvData.getString(i, 'Country').trim();
         let genres = csvData.getString(i, 'Genre(s)');
         let year = csvData.getString(i, 'Year');
         
@@ -253,7 +397,11 @@ function processData() {
         // Parse genres
         let genreList = [];
         if (genres && genres.trim() !== '') {
-            genreList = genres.split('/').map(g => g.trim().toLowerCase()).filter(g => g);
+            // Remove quotes and clean up genre string
+            let cleanGenres = genres.replace(/['"]/g, '').trim();
+            // Split by both comma and slash, then flatten the array
+            let allGenreStrings = cleanGenres.split(/[,/]/).map(g => g.trim().toLowerCase()).filter(g => g);
+            genreList = allGenreStrings;
             genreList.forEach(g => allGenres.add(g));
         }
         
@@ -266,6 +414,22 @@ function processData() {
             genres: genreList,
             year: year
         });
+        
+        // Aggregate by country
+        if (country && country !== '') {
+            if (!countryStats[country]) {
+                countryStats[country] = {
+                    name: country,
+                    artistCount: 0,
+                    artists: [],
+                    events: 0
+                };
+            }
+            
+            countryStats[country].artistCount++;
+            countryStats[country].artists.push(artist);
+            countryStats[country].events++;
+        }
         
         // Aggregate by artist city
         if (city && city !== '' && city !== 'New Delhi' && cityCoordinates[city]) {
@@ -301,6 +465,11 @@ function processData() {
         let stats = cityStats[city];
         stats.uniqueArtists = [...new Set(stats.artists)].length;
         artistCities.push(stats);
+    }
+    
+    // Calculate unique artists for countries
+    for (let country in countryStats) {
+        countryStats[country].uniqueArtists = [...new Set(countryStats[country].artists)].length;
     }
     
     // Convert genres set to sorted array
@@ -340,43 +509,38 @@ function drawVenueMarker() {
             return eventData && eventData.genres.includes(selectedGenre);
         }).length;
     
-    // Animated size
-    let markerSize = 50 + sin(pulseAnimation) * 8;
+    // Simple size with slight animation
+    let starSize = 12;
     if (isHovered) {
-        markerSize += 10;
+        starSize = 14;
     }
     
-    // Draw outer glow
+    // Draw New Delhi marker as a rotating star with orange color
+    push();
+    translate(pos.x, pos.y);
+    rotate(pulseAnimation * 0.05); // Slow rotation
+    
+    // Draw star
+    fill(255, 165, 0); // Orange color
     noStroke();
-    fill(255, 215, 0, 60);
-    circle(pos.x, pos.y, markerSize + 25);
     
-    // Draw main marker
-    fill(255, 215, 0, 240);
-    stroke(255);
-    strokeWeight(3);
-    circle(pos.x, pos.y, markerSize);
-    
-    // Draw inner circle
-    fill(139, 92, 246, 200);
-    noStroke();
-    circle(pos.x, pos.y, markerSize * 0.6);
-    
-    // Draw venue icon (star) - removed per user request
-    
-    // Draw label
-    if (showLabels || isHovered) {
-        fill(255);
-        stroke(0);
-        strokeWeight(3);
-        textSize(16);
-        textStyle(BOLD);
-        text('NEW DELHI', pos.x, pos.y - markerSize - 25);
+    beginShape();
+    for (let i = 0; i < 5; i++) {
+        // Outer point
+        let angle1 = TWO_PI / 5 * i - HALF_PI;
+        let x1 = cos(angle1) * starSize;
+        let y1 = sin(angle1) * starSize;
+        vertex(x1, y1);
         
-        textSize(12);
-        textStyle(NORMAL);
-        text(filteredEvents + ' Events', pos.x, pos.y + markerSize + 20);
+        // Inner point
+        let angle2 = TWO_PI / 5 * i - HALF_PI + TWO_PI / 10;
+        let x2 = cos(angle2) * starSize * 0.4;
+        let y2 = sin(angle2) * starSize * 0.4;
+        vertex(x2, y2);
     }
+    endShape(CLOSE);
+    
+    pop();
 }
 
 function drawArtistCityMarker(city) {
@@ -385,59 +549,25 @@ function drawArtistCityMarker(city) {
     
     // Check if mouse is hovering over city
     let d = dist(mouseX, mouseY, pos.x, pos.y);
-    let baseSize = map(city.artistCount, 1, 50, 8, 25);
+    let baseSize = map(city.artistCount, 1, 50, 6, 18);
     let isHovered = d < baseSize + 5;
     
     if (isHovered) {
         hoveredCity = city;
     }
     
-    // Determine marker size and color
+    // Determine marker size
     let markerSize = baseSize;
-    let markerColor;
-    
     if (selectedCity === city) {
-        markerSize = baseSize + 8 + sin(pulseAnimation) * 4;
-        markerColor = color(236, 72, 153, 240); // Bright pink when selected
+        markerSize = baseSize + 4;
     } else if (isHovered) {
-        markerSize = baseSize + 6;
-        markerColor = color(251, 182, 206, 220); // Light pink on hover
-    } else {
-        markerSize = baseSize + sin(pulseAnimation + artistCities.indexOf(city) * 0.3) * 2;
-        markerColor = color(236, 72, 153, 180); // Pink default
+        markerSize = baseSize + 3;
     }
     
-    // Draw outer glow
+    // Draw city marker with design colors
     noStroke();
-    fill(236, 72, 153, 50);
-    circle(pos.x, pos.y, markerSize + 12);
-    
-    // Draw main marker
-    fill(markerColor);
-    stroke(255);
-    strokeWeight(2);
+    fill(255); // White for city markers
     circle(pos.x, pos.y, markerSize);
-    
-    // Draw inner dot
-    fill(255, 255, 255, 220);
-    noStroke();
-    circle(pos.x, pos.y, markerSize * 0.4);
-    
-    // Draw city label
-    if (showLabels || isHovered || selectedCity === city) {
-        fill(255);
-        stroke(0);
-        strokeWeight(3);
-        textAlign(CENTER, CENTER);
-        textSize(11);
-        textStyle(BOLD);
-        text(city.name, pos.x, pos.y - markerSize - 12);
-        
-        // Show artist count
-        textSize(9);
-        textStyle(NORMAL);
-        text(city.artistCount + ' artists', pos.x, pos.y + markerSize + 12);
-    }
 }
 
 function drawConnectionToVenue(city) {
@@ -453,13 +583,11 @@ function drawConnectionToVenue(city) {
         drawCurvedArtistLines(city, cityPos, venuePos);
     } else {
         // When not selected, draw a single subtle line
-        let opacity = 100;
-        let lineWeight = 2.2;
+        let opacity = 120;
+        let lineWeight = 1.5;
         
-        // Draw connecting line
-        stroke(236, 72, 153, opacity);
-        strokeWeight(lineWeight);
-        line(cityPos.x, cityPos.y, venuePos.x, venuePos.y);
+        // Draw connecting line with yellow-to-purple gradient
+        drawGradientLine(cityPos.x, cityPos.y, venuePos.x, venuePos.y, lineWeight, opacity);
         
         // Draw animated dots (flowing from city to New Delhi)
         let dots = 2;
@@ -468,7 +596,7 @@ function drawConnectionToVenue(city) {
             let x = lerp(cityPos.x, venuePos.x, t);
             let y = lerp(cityPos.y, venuePos.y, t);
             
-            fill(236, 72, 153, opacity + 60);
+            fill(255, opacity + 80);
             noStroke();
             circle(x, y, 3);
         }
@@ -482,9 +610,7 @@ function drawCurvedArtistLines(city, cityPos, venuePos) {
     
     // If only one artist, draw a straight line
     if (numArtists === 1) {
-        stroke(236, 72, 153, 200);
-        strokeWeight(2.5);
-        line(cityPos.x, cityPos.y, venuePos.x, venuePos.y);
+        drawGradientLine(cityPos.x, cityPos.y, venuePos.x, venuePos.y, 2, 200);
         
         // Draw animated dots along straight line
         let dots = 4;
@@ -493,9 +619,9 @@ function drawCurvedArtistLines(city, cityPos, venuePos) {
             let x = lerp(cityPos.x, venuePos.x, t);
             let y = lerp(cityPos.y, venuePos.y, t);
             
-            fill(236, 72, 153, 240);
+            fill(255, 240);
             noStroke();
-            circle(x, y, 5);
+            circle(x, y, 4);
         }
         return;
     }
@@ -544,27 +670,31 @@ function drawCurvedArtistLines(city, cityPos, venuePos) {
         let controlX = midX + perpX * perpendicularOffset;
         let controlY = midY + perpY * perpendicularOffset;
         
-        // Color variation for each artist line
-        let artistColor = lerpColor(
-            color(236, 72, 153), // Pink
-            color(139, 92, 246), // Purple
-            i / max(1, numArtists - 1)
-        );
-        
-        // Draw the curved line using quadratic bezier
+        // Draw the curved line with gradient using quadratic bezier
         noFill();
-        stroke(red(artistColor), green(artistColor), blue(artistColor), 180);
-        strokeWeight(2);
+        strokeWeight(1.5);
         
-        // Draw smooth curved line
-        beginShape();
-        for (let t = 0; t <= 1; t += 0.02) {
-            // Quadratic bezier formula
-            let x = pow(1 - t, 2) * cityPos.x + 2 * (1 - t) * t * controlX + pow(t, 2) * venuePos.x;
-            let y = pow(1 - t, 2) * cityPos.y + 2 * (1 - t) * t * controlY + pow(t, 2) * venuePos.y;
-            curveVertex(x, y);
+        // Draw smooth curved line with gradient starting and ending exactly at city centers
+        let segments = 20;
+        for (let i = 0; i < segments; i++) {
+            let t1 = i / segments; // Current segment start
+            let t2 = (i + 1) / segments; // Current segment end
+            
+            // Calculate current and next points on the curve
+            let x1 = pow(1 - t1, 2) * cityPos.x + 2 * (1 - t1) * t1 * controlX + pow(t1, 2) * venuePos.x;
+            let y1 = pow(1 - t1, 2) * cityPos.y + 2 * (1 - t1) * t1 * controlY + pow(t1, 2) * venuePos.y;
+            
+            let x2 = pow(1 - t2, 2) * cityPos.x + 2 * (1 - t2) * t2 * controlX + pow(t2, 2) * venuePos.x;
+            let y2 = pow(1 - t2, 2) * cityPos.y + 2 * (1 - t2) * t2 * controlY + pow(t2, 2) * venuePos.y;
+            
+            // Interpolate color from yellow to purple based on position
+            let r = lerp(255, 139, t1); // 255->139 (yellow to purple red)
+            let g = lerp(255, 92, t1);  // 255->92 (yellow to purple green) 
+            let b = lerp(0, 246, t1);   // 0->246 (yellow to purple blue)
+            
+            stroke(r, g, b, 160);
+            line(x1, y1, x2, y2);
         }
-        endShape();
         
         // Draw animated dots along the curve
         let dots = 3;
@@ -575,9 +705,9 @@ function drawCurvedArtistLines(city, cityPos, venuePos) {
             let x = pow(1 - t, 2) * cityPos.x + 2 * (1 - t) * t * controlX + pow(t, 2) * venuePos.x;
             let y = pow(1 - t, 2) * cityPos.y + 2 * (1 - t) * t * controlY + pow(t, 2) * venuePos.y;
             
-            fill(red(artistColor), green(artistColor), blue(artistColor), 220);
+            fill(255, 200);
             noStroke();
-            circle(x, y, 5);
+            circle(x, y, 4);
         }
     }
 }
@@ -588,36 +718,118 @@ function drawArtistConnection() {
     // Find all events for the selected artist
     let artistEvents = eventsData.filter(e => e.artist === selectedArtist);
     
-    for (let event of artistEvents) {
-        if (event.city && cityCoordinates[event.city]) {
-            const cityPos = latLngToPixel(cityCoordinates[event.city].lat, cityCoordinates[event.city].lng);
-            const venuePos = latLngToPixel(VENUE.lat, VENUE.lng);
-            
-            // Draw golden line for selected artist
-            stroke(255, 215, 0, 200);
-            strokeWeight(3);
-            line(cityPos.x, cityPos.y, venuePos.x, venuePos.y);
-            
-            // Draw animated dots (golden)
-            let dots = 5;
-            for (let i = 0; i < dots; i++) {
-                let t = (i / dots + pulseAnimation * 0.2) % 1;
-                let x = lerp(cityPos.x, venuePos.x, t);
-                let y = lerp(cityPos.y, venuePos.y, t);
-                
-                fill(255, 215, 0, 240);
-                noStroke();
-                circle(x, y, 6);
-            }
-        }
+    if (artistEvents.length === 0 || !artistEvents[0].city || !cityCoordinates[artistEvents[0].city]) return;
+    
+    // Get the artist's city (first event city)
+    let artistCity = artistEvents[0].city;
+    const cityPos = latLngToPixel(cityCoordinates[artistCity].lat, cityCoordinates[artistCity].lng);
+    const venuePos = latLngToPixel(VENUE.lat, VENUE.lng);
+    
+    // Draw single white line for selected artist
+    stroke(255, 255, 255, 220); // Pure white
+    strokeWeight(3);
+    line(cityPos.x, cityPos.y, venuePos.x, venuePos.y);
+    
+    // Draw animated dots (white)
+    let dots = 5;
+    for (let i = 0; i < dots; i++) {
+        let t = (i / dots + pulseAnimation * 0.2) % 1;
+        let x = lerp(cityPos.x, venuePos.x, t);
+        let y = lerp(cityPos.y, venuePos.y, t);
+        
+        fill(255, 255, 255, 240); // Pure white dots
+        noStroke();
+        circle(x, y, 6);
     }
 }
 
+function drawConcentricCircles() {
+    if (!selectedArtist) return;
+    
+    // Find all events for the selected artist
+    let artistEvents = eventsData.filter(e => e.artist === selectedArtist);
+    let gigCount = artistEvents.length;
+    
+    if (gigCount === 0 || !artistEvents[0].city || !cityCoordinates[artistEvents[0].city]) return;
+    
+    // Get artist's city position
+    let artistCity = artistEvents[0].city;
+    const cityPos = latLngToPixel(cityCoordinates[artistCity].lat, cityCoordinates[artistCity].lng);
+    
+    // Draw concentric circles based on gig count
+    // More gigs = more circles
+    let numCircles = min(gigCount, 10); // Cap at 10 circles for visual clarity
+    
+    push();
+    noFill();
+    
+    for (let i = 1; i <= numCircles; i++) {
+        // Calculate circle properties
+        let radius = i * 15; // Each circle is 15 pixels apart
+        let animatedRadius = radius + sin(pulseAnimation + i * 0.3) * 3; // Slight pulsing effect
+        
+        // Draw glow effect (yellow) - multiple layers for stronger glow
+        for (let j = 3; j >= 1; j--) {
+            let glowAlpha = map(j, 1, 3, 80, 20) * map(i, 1, numCircles, 1, 0.5);
+            stroke(255, 255, 0, glowAlpha); // Yellow glow
+            strokeWeight(6 - j * 1.5);
+            circle(cityPos.x, cityPos.y, animatedRadius * 2);
+        }
+        
+        // Draw main circle with gradient from yellow to purple/pink
+        let t = i / numCircles;
+        let r = lerp(255, 139, t); // Yellow to purple red
+        let g = lerp(255, 92, t);  // Yellow to purple green
+        let b = lerp(0, 246, t);   // Yellow to purple blue
+        
+        // Opacity stays higher - less transparent
+        let alpha = map(i, 1, numCircles, 240, 160);
+        
+        stroke(r, g, b, alpha);
+        strokeWeight(2.5);
+        circle(cityPos.x, cityPos.y, animatedRadius * 2);
+    }
+    
+    pop();
+}
+
 function mousePressed() {
+    // Check if mouse is over the left panel - don't process map clicks
+    const panel = document.getElementById('main-panel');
+    if (panel) {
+        const rect = panel.getBoundingClientRect();
+        if (mouseX >= rect.left && mouseX <= rect.right && 
+            mouseY >= rect.top && mouseY <= rect.bottom) {
+            return; // Click is on panel, ignore
+        }
+    }
+    
+    // Reset drag flag
+    hasDragged = false;
+    
     // Check if clicking on New Delhi venue
     const venuePos = latLngToPixel(VENUE.lat, VENUE.lng);
     let d = dist(mouseX, mouseY, venuePos.x, venuePos.y);
     if (d < 30) {
+        // Spawn firecracker particles from New Delhi
+        spawnParticles(venuePos.x, venuePos.y, 50);
+        
+        // Clear artist and genre selections
+        selectedArtist = null;
+        selectedGenre = 'all';
+        
+        // Reset dropdowns
+        const artistDropdown = document.getElementById('artist-dropdown');
+        if (artistDropdown) artistDropdown.value = '';
+        const genreDropdown = document.getElementById('genre-dropdown');
+        if (genreDropdown) genreDropdown.value = 'all';
+        
+        // Toggle showing all connections when clicking New Delhi
+        if (selectedCity === 'NEW_DELHI_ALL') {
+            selectedCity = null; // Hide all connections
+        } else {
+            selectedCity = 'NEW_DELHI_ALL'; // Special marker for showing all
+        }
         updateVenueInfo();
         return;
     }
@@ -629,41 +841,112 @@ function mousePressed() {
         let d = dist(mouseX, mouseY, pos.x, pos.y);
         
         if (d < baseSize + 5) {
+            // Clear artist and genre selections
+            selectedArtist = null;
+            selectedGenre = 'all';
+            
+            // Reset dropdowns
+            const artistDropdown = document.getElementById('artist-dropdown');
+            if (artistDropdown) artistDropdown.value = '';
+            const genreDropdown = document.getElementById('genre-dropdown');
+            if (genreDropdown) genreDropdown.value = 'all';
+            
             selectedCity = selectedCity === city ? null : city;
             updateInfoPanel(city);
             return;
         }
     }
     
-    // Start dragging
+    // Start dragging - but don't clear selections yet
+    // Will only clear if no drag actually happens (on mouseReleased)
     isDragging = true;
     lastMouseX = mouseX;
     lastMouseY = mouseY;
-    
-    // Clear selection if clicked elsewhere
-    selectedCity = null;
-    updateInfoPanel(null);
 }
 
 function mouseReleased() {
+    // Only clear selections if we clicked (no drag) on empty space
+    if (!hasDragged && isDragging) {
+        // Check if mouse is over the left panel - don't process
+        const panel = document.getElementById('main-panel');
+        if (panel) {
+            const rect = panel.getBoundingClientRect();
+            if (mouseX >= rect.left && mouseX <= rect.right && 
+                mouseY >= rect.top && mouseY <= rect.bottom) {
+                isDragging = false;
+                return; // Click is on panel, ignore
+            }
+        }
+        
+        // Clear all selections and reset everything
+        selectedCity = null;
+        selectedArtist = null;
+        selectedGenre = 'all';
+        
+        // Reset dropdowns
+        const artistDropdown = document.getElementById('artist-dropdown');
+        if (artistDropdown) artistDropdown.value = '';
+        const genreDropdown = document.getElementById('genre-dropdown');
+        if (genreDropdown) genreDropdown.value = 'all';
+        
+        // Update info panel to show default view
+        updateGenreInfoPanel();
+    }
+    
     isDragging = false;
+    hasDragged = false;
 }
 
 function mouseDragged() {
     if (isDragging) {
-        offsetX += (mouseX - lastMouseX);
-        offsetY += (mouseY - lastMouseY);
+        // Mark that dragging has occurred
+        hasDragged = true;
+        
+        let deltaX = mouseX - lastMouseX;
+        let deltaY = mouseY - lastMouseY;
+        
+        offsetX += deltaX;
+        offsetY += deltaY;
+        
+        // Constrain panning to actual map edges - prevent showing empty space
+        // Tight constraints based on the actual map projection bounds
+        let maxOffsetX = zoom * 150;  // Very tight horizontal limit
+        let maxOffsetY = zoom * 50;  // Very tight vertical limit
+        
+        offsetX = constrain(offsetX, -maxOffsetX, maxOffsetX);
+        offsetY = constrain(offsetY, -maxOffsetY, maxOffsetY);
+        
         lastMouseX = mouseX;
         lastMouseY = mouseY;
     }
 }
 
 function mouseWheel(event) {
-    // Zoom with scroll
+    // Check if mouse is over the left panel
+    const panel = document.getElementById('main-panel');
+    if (panel) {
+        const rect = panel.getBoundingClientRect();
+        if (mouseX >= rect.left && mouseX <= rect.right && 
+            mouseY >= rect.top && mouseY <= rect.bottom) {
+            // Mouse is over the panel, allow default scrolling
+            return true;
+        }
+    }
+    
+    // Mouse is over the map, zoom with scroll
     let zoomChange = -event.delta * 0.3;
     zoom += zoomChange;
     zoom = constrain(zoom, 10, 500);
-    return false; // Prevent page scrolling
+    
+    // Apply constraints to offset after zoom to keep map in bounds
+    // Tight constraints based on the actual map projection bounds
+    let maxOffsetX = zoom * 150;  // Horizontal limit
+    let maxOffsetY = zoom * 50;  // Vertical limit
+    
+    offsetX = constrain(offsetX, -maxOffsetX, maxOffsetX);
+    offsetY = constrain(offsetY, -maxOffsetY, maxOffsetY);
+    
+    return false; // Prevent page scrolling on map
 }
 
 function mouseMoved() {
@@ -757,15 +1040,139 @@ function updateInfoPanel(city) {
         infoDiv.innerHTML = `
             <p class="city-name">${city.name}</p>
             <p style="font-size: 12px; color: #ec4899; margin-top: 5px;">${city.country}</p>
-            <p><strong>Artists:</strong> ${city.artistCount}</p>
             <p><strong>Unique Artists:</strong> ${city.uniqueArtists}</p>
             <p><strong>Events:</strong> ${city.events}</p>
-            ${genreHtml ? `<p><strong>Genres:</strong><br/>${genreHtml}</p>` : ''}
-            <p style="font-size: 11px; margin-top: 10px;"><strong>Artists:</strong><br/>${artistNames}</p>
+            ${genreHtml ? `<div class="genres-section"><p><strong>Genres:</strong></p>${genreHtml}</div>` : ''}
+            <p class="artists-list"><strong>Artists:</strong><br/>${artistNames}</p>
         `;
     } else {
         infoDiv.innerHTML = '';
     }
+}
+
+function updateGenreInfoPanel() {
+    const infoDiv = document.getElementById('city-info');
+    
+    if (selectedGenre === 'all') {
+        // Show overall stats when "all" is selected
+        updateVenueInfo();
+        return;
+    }
+    
+    // Filter events by selected genre
+    let genreEvents = eventsData.filter(e => e.genres.includes(selectedGenre));
+    
+    if (genreEvents.length === 0) {
+        infoDiv.innerHTML = `
+            <p class="city-name">${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)}</p>
+            <p style="color: #ec4899;">No artists found for this genre.</p>
+        `;
+        return;
+    }
+    
+    // Group artists by city
+    let citiesMap = {};
+    genreEvents.forEach(event => {
+        if (!event.city || !cityCoordinates[event.city]) return;
+        
+        if (!citiesMap[event.city]) {
+            citiesMap[event.city] = {
+                city: event.city,
+                country: event.country,
+                artists: new Set()
+            };
+        }
+        citiesMap[event.city].artists.add(event.artist);
+    });
+    
+    // Convert to array and sort by number of artists (descending)
+    let citiesArray = Object.values(citiesMap).map(city => ({
+        ...city,
+        artistCount: city.artists.size,
+        artistList: Array.from(city.artists).sort()
+    })).sort((a, b) => b.artistCount - a.artistCount);
+    
+    // Get total stats
+    let totalArtists = [...new Set(genreEvents.map(e => e.artist))].length;
+    let totalCities = citiesArray.length;
+    let totalEvents = genreEvents.length;
+    
+    // Build HTML for cities and artists
+    let citiesHtml = citiesArray.map(city => {
+        let artistsText = city.artistList.join(', ');
+        return `
+            <div style="margin-bottom: 12px; padding: 8px; background: rgba(236, 72, 153, 0.1); border-left: 2px solid rgba(236, 72, 153, 0.5); border-radius: 4px;">
+                <p style="margin: 0; font-weight: bold; color: #ec4899;">${city.city}, ${city.country}</p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #fbbf24;">${city.artistCount} artist${city.artistCount > 1 ? 's' : ''}</p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #e0e0e0;">${artistsText}</p>
+            </div>
+        `;
+    }).join('');
+    
+    infoDiv.innerHTML = `
+        <p class="city-name">${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)}</p>
+        <p style="font-size: 12px; color: #a855f7; margin-top: 5px;">★ Genre Overview</p>
+        <p><strong>Total Artists:</strong> ${totalArtists}</p>
+        <p><strong>Total Events:</strong> ${totalEvents}</p>
+        <p><strong>Cities:</strong> ${totalCities}</p>
+        <div style="margin-top: 15px;">
+            <p><strong>Artists by City:</strong></p>
+            ${citiesHtml}
+        </div>
+    `;
+}
+
+function updateArtistInfoPanel(artistName) {
+    const infoDiv = document.getElementById('city-info');
+    
+    // Get all events for this artist
+    let artistEvents = eventsData.filter(e => e.artist === artistName);
+    
+    if (artistEvents.length === 0) {
+        infoDiv.innerHTML = `
+            <p class="city-name">${artistName}</p>
+            <p style="color: #ec4899;">No information found for this artist.</p>
+        `;
+        return;
+    }
+    
+    // Get artist details
+    let gigsPlayed = artistEvents.length;
+    let city = artistEvents[0].city;
+    let country = artistEvents[0].country;
+    
+    // Get all unique genres for this artist
+    let allGenres = new Set();
+    artistEvents.forEach(event => {
+        event.genres.forEach(genre => allGenres.add(genre));
+    });
+    let genresList = Array.from(allGenres).sort();
+    
+    // Build genres HTML
+    let genresHtml = genresList.map(genre => 
+        `<span style="display: inline-block; margin: 3px 5px 3px 0; padding: 3px 8px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; font-size: 11px; color: #a855f7;">${genre}</span>`
+    ).join('');
+    
+    // Get event titles
+    let eventTitles = [...new Set(artistEvents.map(e => e.eventTitle))].sort();
+    let eventsHtml = eventTitles.map(title => 
+        `<div style="margin: 4px 0; padding: 4px 8px; background: rgba(236, 72, 153, 0.1); border-radius: 4px; font-size: 11px; color: #e0e0e0;">${title}</div>`
+    ).join('');
+    
+    infoDiv.innerHTML = `
+        <p class="city-name">${artistName}</p>
+        <p style="font-size: 12px; color: #fbbf24; margin-top: 5px;">★ Artist Profile</p>
+        <p><strong>From:</strong> ${city}, ${country}</p>
+        <p><strong>Gigs Played:</strong> ${gigsPlayed}</p>
+        <div style="margin-top: 12px;">
+            <p><strong>Genres:</strong></p>
+            <div style="margin-top: 5px;">${genresHtml}</div>
+        </div>
+        <div style="margin-top: 15px;">
+            <p><strong>Events Performed:</strong></p>
+            ${eventsHtml}
+        </div>
+    `;
 }
 
 function populateGenreDropdown() {
@@ -788,7 +1195,15 @@ function populateGenreDropdown() {
     dropdown.addEventListener('change', function() {
         selectedGenre = this.value;
         selectedCity = null;
-        updateInfoPanel(null);
+        selectedArtist = null;
+        
+        // Reset artist dropdown
+        const artistDropdown = document.getElementById('artist-dropdown');
+        if (artistDropdown) {
+            artistDropdown.value = '';
+        }
+        
+        updateGenreInfoPanel();
     });
 }
 
@@ -815,35 +1230,37 @@ function populateArtistDropdown() {
     dropdown.addEventListener('change', function() {
         selectedArtist = this.value || null;
         if (selectedArtist) {
-            // Find the artist's city and show info
+            // Clear other selections
+            selectedCity = null;
+            selectedGenre = 'all';
+            
+            // Reset genre dropdown
+            const genreDropdown = document.getElementById('genre-dropdown');
+            if (genreDropdown) {
+                genreDropdown.value = 'all';
+            }
+            
+            // Show artist info panel
+            updateArtistInfoPanel(selectedArtist);
+            
+            // Find the artist's city for positioning
             let artistEvent = eventsData.find(e => e.artist === selectedArtist);
             if (artistEvent && artistEvent.city) {
                 let city = artistCities.find(c => c.name === artistEvent.city);
                 if (city) {
                     selectedCity = city;
-                    updateInfoPanel(city);
                 }
             }
+        } else {
+            // Clear selection
+            selectedCity = null;
+            updateGenreInfoPanel();
         }
     });
 }
 
 function setupControls() {
-    document.getElementById('reset-btn').addEventListener('click', () => {
-        zoom = 5;
-        offsetX = 0;
-        offsetY = 0;
-        centerLat = 20.0;
-        centerLng = 40.0;
-        selectedCity = null;
-        selectedArtist = null;
-        updateInfoPanel(null);
-    });
-    
-    document.getElementById('toggle-labels').addEventListener('click', function() {
-        showLabels = !showLabels;
-        this.textContent = showLabels ? 'Hide Labels' : 'Show Labels';
-    });
+    // Setup genre and artist dropdowns (buttons removed)
 }
 
 function windowResized() {

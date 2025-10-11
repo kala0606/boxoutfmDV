@@ -3,232 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boxout.fm Impact</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-        crossorigin=""/>
-    
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
+    <title>Boxout.fm Impact - World Vector Map</title>
     
     <!-- p5.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
     
-    <!-- Mappa -->
-    <script src="mappa.js"></script>
-    
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-        }
-        
-        #info-panel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(30, 30, 50, 0.7);
-            border: 1px solid rgba(128, 128, 128, 0.3);
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(128, 128, 128, 0.2);
-            z-index: 1000;
-            max-width: 350px;
-            max-height: 80vh;
-            overflow-y: auto;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-        }
-        
-        #info-panel h2 {
-            margin: 0 0 15px 0;
-            font-size: 20px;
-            color: #e0e0ff;
-            padding-bottom: 10px;
-            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-        }
-        
-        #info-panel p {
-            margin: 8px 0;
-            font-size: 14px;
-            color: #c4c4e0;
-        }
-        
-        .city-name {
-            font-weight: bold;
-            color: #a78bfa;
-            font-size: 16px;
-            text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
-        }
-        
-        #legend {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(30, 30, 50, 0.7);
-            border: 1px solid rgba(128, 128, 128, 0.3);
-            padding: 15px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(128, 128, 128, 0.2);
-            z-index: 1000;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            min-width: 200px;
-        }
-        
-        #legend h3 {
-            margin: 0 0 10px 0;
-            font-size: 16px;
-            color: #e0e0ff;
-            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin: 8px 0;
-            font-size: 13px;
-            color: #c4c4e0;
-        }
-        
-        .legend-circle {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            margin-right: 10px;
-            border: 2px solid rgba(128, 128, 128, 0.5);
-            box-shadow: 0 0 10px rgba(128, 128, 128, 0.3);
-        }
-        
-        #controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(30, 30, 50, 0.7);
-            border: 1px solid rgba(128, 128, 128, 0.3);
-            padding: 15px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(128, 128, 128, 0.2);
-            z-index: 1000;
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-        }
-        
-        #controls h3 {
-            color: #e0e0ff;
-            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-        }
-        
-        button {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            color: white;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            padding: 10px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 5px 0;
-            width: 100%;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px 0 rgba(139, 92, 246, 0.3);
-        }
-        
-        button:hover {
-            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
-            box-shadow: 0 6px 20px 0 rgba(139, 92, 246, 0.5);
-            transform: translateY(-2px);
-        }
-        
-        .selected {
-            background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%) !important;
-        }
-        
-        /* Scrollbar styling */
-        #info-panel::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        #info-panel::-webkit-scrollbar-track {
-            background: rgba(30, 30, 50, 0.5);
-            border-radius: 10px;
-        }
-        
-        #info-panel::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-            border-radius: 10px;
-        }
-        
-        #info-panel::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
-        }
-    </style>
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="styles_vector.css">
 </head>
 <body>
-    <div id="controls">
-        <h3 style="margin: 0 0 10px 0; font-size: 16px;">Controls</h3>
-        <button id="reset-btn">Reset View</button>
-        <button id="toggle-labels">Toggle Labels</button>
-        <div style="margin-top: 15px;">
-            <label style="font-size: 12px; color: #c4c4e0; display: block; margin-bottom: 5px;">
-                🎵 Filter by Genre
-            </label>
-            <select id="genre-dropdown" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(30, 30, 50, 0.9); border: 1px solid rgba(128, 128, 128, 0.3); color: #e0e0ff; font-size: 13px; cursor: pointer; margin-bottom: 10px;">
+    <div id="main-panel">
+        <h2>Boxout Wednesdays</h2>
+        <p class="subtitle">Global artists journeying to New Delhi</p>
+        
+        <!-- City Info Section -->
+        <div id="city-info"></div>
+        
+        <!-- Dropdowns -->
+        <div class="filter-section">
+            <select id="genre-dropdown">
                 <option value="all">All Genres</option>
             </select>
-        </div>
-        <div>
-            <label style="font-size: 12px; color: #c4c4e0; display: block; margin-bottom: 5px;">
-                🎤 Select Artist
-            </label>
-            <select id="artist-dropdown" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(30, 30, 50, 0.9); border: 1px solid rgba(128, 128, 128, 0.3); color: #e0e0ff; font-size: 13px; cursor: pointer;">
-                <option value="">-- Select Artist --</option>
+            <select id="artist-dropdown">
+                <option value="">Select Artist</option>
             </select>
         </div>
     </div>
     
-    <div id="info-panel">
-        <h2>Boxout Wednesdays</h2>
-        <p style="font-size: 13px; color: #c4c4e0;">Global artists journeying to New Delhi</p>
-        <div id="city-info"></div>
-    </div>
-    
-    <div id="legend">
-        <h3>Legend</h3>
-        <div class="legend-item">
-            <div class="legend-circle" style="background: linear-gradient(135deg, #ffd700, #ffed4e); width: 28px; height: 28px;"></div>
-            <span>New Delhi (Venue)</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-circle" style="background: linear-gradient(135deg, #ec4899, #f472b6); width: 14px; height: 14px;"></div>
-            <span>Artist Cities</span>
-        </div>
-        <div class="legend-item">
-            <div style="width: 40px; height: 2px; background: linear-gradient(90deg, #ec4899, #f472b6); margin-right: 10px; border-radius: 1px;"></div>
-            <span>Artist Journey</span>
-        </div>
-        <div class="legend-item">
-            <div style="width: 40px; height: 3px; background: linear-gradient(90deg, #ffd700, #ffed4e); margin-right: 10px; border-radius: 1.5px;"></div>
-            <span>Selected Artist</span>
-        </div>
-        <p style="margin-top: 10px; font-size: 11px; color: #c4c4e0;">
-            <strong style="color: #ffd700;">Click New Delhi:</strong> View all event statistics<br/>
-            <strong style="color: #f472b6;">Click artist city:</strong> View city details<br/>
-            <strong style="color: #a78bfa;">Select artist:</strong> Highlight their journey
-        </p>
-        <p style="margin-top: 8px; font-size: 10px; color: #9090b0;">
-            Marker size = number of artists<br/>
-            All events held in New Delhi
-        </p>
-    </div>
-    
-    <script src="sketch.js"></script>
+    <script src="sketch_vector.js"></script>
 </body>
 </html>
 

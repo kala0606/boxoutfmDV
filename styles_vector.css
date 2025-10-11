@@ -1,0 +1,321 @@
+/* ===================================
+   BOXOUT WEDNESDAYS - VECTOR MAP STYLES
+   =================================== */
+
+/* ===================================
+   BASE STYLES
+   =================================== */
+
+/* Body - Main container */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    /* Background gradient using design palette */
+    background: linear-gradient(135deg, #5C2D91 0%, #6A2E9C 50%, #5C2D91 100%);
+}
+
+/* Canvas - The p5.js drawing area */
+canvas {
+    display: block;
+}
+
+
+/* ===================================
+   MAIN PANEL (Left side panel)
+   =================================== */
+
+#main-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    bottom: 20px;
+    
+    /* Panel background and transparency */
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    
+    /* Panel dimensions */
+    width: 320px;
+    padding: 20px;
+    
+    /* Panel styling */
+    border-radius: 10px;
+    /* border: 1px solid rgba(160,160,160, 0.3); */
+    box-shadow: 0 8px 32px 0 rgba(0,0,0, 0.2);
+    
+    /* Flexbox for internal layout */
+    display: flex;
+    flex-direction: column;
+    
+    /* Scrolling */
+    overflow-y: auto;
+    overflow-x: hidden;
+    
+    z-index: 1000;
+}
+
+/* Panel heading (h2) - Main title */
+#main-panel h2 {
+    margin: 0 0 15px 0;
+    padding-bottom: 0px;
+    font-size: 40px;
+    color: #e0e0ff;
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Panel subheading (h3) - Section titles */
+#main-panel h3 {
+    margin: 10px 0 10px 0;
+    font-size: 16px;
+    color: #e0e0ff;
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Panel paragraph text */
+#main-panel p {
+    margin: 6px 0;
+    font-size: 14px;
+    color: #c4c4e0;
+}
+
+/* Subtitle under main heading */
+.subtitle {
+    font-size: 13px;
+    color: #c4c4e0;
+}
+
+/* Artist names list styling */
+#city-info .artists-list {
+    font-size: 14px; /* Set to 14px */
+    line-height: 1.4;
+}
+
+/* Spacing for genres section */
+#city-info .genres-section {
+    margin-top: 15px; /* Add space between "Genres:" and genre tags */
+}
+
+
+/* ===================================
+   CITY INFO SECTION
+   =================================== */
+
+/* City name styling */
+.city-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #000000; /* Purple color */
+    text-shadow: 0 0 10px rgba(120,120,120, 0.5);
+}
+
+
+/* ===================================
+   LEGEND ITEMS
+   =================================== */
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    font-size: 13px;
+    color: #c4c4e0;
+}
+
+/* Legend circle markers */
+.legend-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: 2px solid rgba(167, 139, 250, 0.5);
+    box-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
+}
+
+
+/* ===================================
+   FILTER SECTION (Dropdowns area)
+   =================================== */
+
+.filter-section {
+    margin: 15px 0;
+    padding: 15px 0;
+}
+
+
+/* ===================================
+   BUTTONS
+   =================================== */
+
+button {
+    /* Button colors - gradient background */
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    
+    /* Button dimensions and spacing */
+    width: 100%;
+    padding: 10px 15px;
+    margin: 5px 0;
+    
+    /* Button styling */
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 8px;
+    font-size: 14px;
+    
+    /* Effects */
+    box-shadow: 0 4px 15px 0 rgba(139, 92, 246, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Button hover effect */
+button:hover {
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+    box-shadow: 0 6px 20px 0 rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px);
+}
+
+
+/* ===================================
+   DROPDOWNS (Select elements)
+   =================================== */
+
+select {
+    /* Custom dark dropdown styling */
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(160, 160, 160, 0.3);
+    color: #e0e0ff;
+    box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.3);
+    
+    /* You can add more styling here */
+    width: 100%;
+    padding: 12px 35px 12px 12px; /* More padding for better look */
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    
+    /* Remove default appearance */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    
+    /* Add custom dropdown arrow */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e0e0ff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    
+    /* Smooth transitions */
+    transition: all 0.3s ease;
+}
+
+/* Dropdown hover effect */
+select:hover {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 6px 20px 0 rgba(139, 92, 246, 0.2);
+}
+
+/* Dropdown focus effect */
+select:focus {
+    outline: none;
+    border-color: rgba(139, 92, 246, 0.7);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+}
+
+
+/* ===================================
+   LABELS
+   =================================== */
+
+label {
+    color: #dadada;
+}
+
+
+/* ===================================
+   SCROLLBAR STYLING (For main panel and nested content)
+   =================================== */
+
+/* Scrollbar track for main panel */
+#main-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+/* Scrollbar background for main panel */
+#main-panel::-webkit-scrollbar-track {
+    background: rgba(30, 30, 50, 0.5);
+    border-radius: 10px;
+}
+
+/* Scrollbar thumb (the draggable part) for main panel */
+#main-panel::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    border-radius: 10px;
+}
+
+/* Scrollbar thumb on hover for main panel */
+#main-panel::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+}
+
+/* Scrollbar styling for nested scrollable divs */
+#city-info div::-webkit-scrollbar {
+    width: 6px;
+}
+
+#city-info div::-webkit-scrollbar-track {
+    background: rgba(30, 30, 50, 0.3);
+    border-radius: 10px;
+}
+
+#city-info div::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    border-radius: 10px;
+}
+
+#city-info div::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+}
+
+/* Firefox scrollbar styling */
+#main-panel {
+    scrollbar-width: thin;
+    scrollbar-color: #8b5cf6 rgba(30, 30, 50, 0.5);
+}
+
+#city-info div {
+    scrollbar-width: thin;
+    scrollbar-color: #8b5cf6 rgba(30, 30, 50, 0.3);
+}
+
+
+/* ===================================
+   COLOR REFERENCE
+   ===================================
+   
+   Purple tones:
+   - #8b5cf6 - Main purple
+   - #7c3aed - Darker purple
+   - #a78bfa - Lighter purple
+   - #e0e0ff - Very light purple/white
+   
+   Pink tones:
+   - #ec4899 - Main pink
+   - #f472b6 - Lighter pink
+   
+   Backgrounds:
+   - #1a1a2e - Dark blue-grey
+   - #16213e - Medium dark blue
+   - #0f3460 - Deep blue
+   
+   Text colors:
+   - #c4c4e0 - Light grey-purple (body text)
+   - #e0e0ff - Very light purple (headings)
+   
+   =================================== */
+
