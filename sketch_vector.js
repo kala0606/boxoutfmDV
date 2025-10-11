@@ -795,6 +795,11 @@ function drawConcentricCircles() {
 }
 
 function mousePressed() {
+    handlePress();
+}
+
+// Handle both mouse and touch presses
+function handlePress() {
     // Check if mouse is over the left panel - don't process map clicks
     const panel = document.getElementById('main-panel');
     if (panel) {
@@ -814,6 +819,7 @@ function mousePressed() {
     let d = dist(mouseX, mouseY, venuePos.x, venuePos.y);
     if (d < 30) {
         clickedOnInteractive = true; // Mark that we clicked on something interactive
+        isDragging = false; // Don't treat as drag
         
         // Spawn firecracker particles from New Delhi
         spawnParticles(venuePos.x, venuePos.y, 50);
@@ -846,6 +852,7 @@ function mousePressed() {
         
         if (d < baseSize + 5) {
             clickedOnInteractive = true; // Mark that we clicked on something interactive
+            isDragging = false; // Don't treat as drag
             
             // Clear artist and genre selections
             selectedArtist = null;
@@ -870,7 +877,17 @@ function mousePressed() {
     lastMouseY = mouseY;
 }
 
+// Add explicit touch support
+function touchStarted() {
+    handlePress();
+    return false; // Prevent default behavior
+}
+
 function mouseReleased() {
+    handleRelease();
+}
+
+function handleRelease() {
     // Only clear selections if we clicked (no drag) on empty space (not on interactive elements)
     if (!hasDragged && !clickedOnInteractive && isDragging) {
         // Check if mouse is over the left panel - don't process
@@ -905,7 +922,17 @@ function mouseReleased() {
     clickedOnInteractive = false;
 }
 
+// Add explicit touch end support
+function touchEnded() {
+    handleRelease();
+    return false; // Prevent default behavior
+}
+
 function mouseDragged() {
+    handleDrag();
+}
+
+function handleDrag() {
     if (isDragging) {
         // Mark that dragging has occurred
         hasDragged = true;
@@ -927,6 +954,12 @@ function mouseDragged() {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
     }
+}
+
+// Add explicit touch move support
+function touchMoved() {
+    handleDrag();
+    return false; // Prevent default behavior
 }
 
 function mouseWheel(event) {
