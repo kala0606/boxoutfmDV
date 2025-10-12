@@ -221,9 +221,12 @@ function drawGradientLine(x1, y1, x2, y2, weight, opacity) {
 }
 
 function preload() {
-    // Load GeoJSON and CSV data
+    // Load GeoJSON and CSV data from Google Sheets
     worldGeoJSON = loadJSON('world.geojson');
-    csvData = loadTable('BO.csv', 'csv', 'header');
+    
+    // Load data from published Google Sheet
+    const googleSheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSTEl_GXepxwmGYMTgL2QAvriYcTaMA9dthGWHwq7r8-WXfU_Fh8NXoG_Nel98Fo-d_m33RvIpRgabZ/pub?gid=420840945&single=true&output=csv';
+    csvData = loadTable(googleSheetURL, 'csv', 'header');
 }
 
 function setup() {
