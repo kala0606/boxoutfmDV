@@ -1003,6 +1003,14 @@ function touchMoved() {
             zoom += zoomChange;
             zoom = constrain(zoom, 10, 500);
             
+            // Zoom towards viewport center
+            // Calculate zoom factor
+            let zoomFactor = zoom / oldZoom;
+            
+            // Adjust offsets to maintain viewport center position
+            offsetX *= zoomFactor;
+            offsetY *= zoomFactor;
+            
             console.log('Pinching: old zoom:', oldZoom.toFixed(1), 'new zoom:', zoom.toFixed(1));
             
             // Apply constraints to offset after zoom
@@ -1034,12 +1042,20 @@ function mouseWheel(event) {
     }
     
     // Mouse is over the map, zoom with scroll
+    let oldZoom = zoom;
     let zoomChange = -event.delta * 0.3;
     zoom += zoomChange;
     zoom = constrain(zoom, 10, 500);
     
+    // Zoom towards viewport center
+    // Calculate zoom factor
+    let zoomFactor = zoom / oldZoom;
+    
+    // Adjust offsets to maintain viewport center position
+    offsetX *= zoomFactor;
+    offsetY *= zoomFactor;
+    
     // Apply constraints to offset after zoom to keep map in bounds
-    // Tight constraints based on the actual map projection bounds
     let maxOffsetX = zoom * 150;  // Horizontal limit
     let maxOffsetY = zoom * 50;  // Vertical limit
     
