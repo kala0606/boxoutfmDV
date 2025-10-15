@@ -31,16 +31,16 @@ canvas {
     position: fixed;
     top: 20px;
     left: 20px;
-    bottom: 20px;
     
     /* Panel background and transparency */
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     
-    /* Panel dimensions */
+    /* Panel dimensions - reactive height with max constraint */
     width: 320px;
-    padding: 20px;
+    max-height: calc(100vh - 40px); /* Maximum height is viewport minus top/bottom margins */
+    padding: 0;
     
     /* Panel styling */
     border-radius: 10px;
@@ -52,14 +52,69 @@ canvas {
     flex-direction: column;
     
     /* Scrolling */
+    overflow: hidden;
+    
+    z-index: 1000;
+}
+
+/* Panel header with toggle button */
+.panel-header {
+    padding: 20px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+/* Panel content area */
+.panel-content {
+    padding: 0 20px 20px 20px;
     overflow-y: auto;
     overflow-x: hidden;
+    flex: 1;
     
     /* Enable touch scrolling on mobile */
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
     
-    z-index: 1000;
+    /* Smooth transition for collapse/expand */
+    transition: all 0.3s ease;
+}
+
+/* Collapsed state */
+#main-panel.collapsed .panel-content {
+    max-height: 0;
+    padding: 0 20px;
+    overflow: hidden;
+}
+
+/* Toggle button */
+.toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.2);
+    color: #e0e0ff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    z-index: 1001;
+}
+
+.toggle-btn:hover {
+    background: rgba(139, 92, 246, 0.4);
+    border-color: rgba(139, 92, 246, 0.6);
+    transform: scale(1.1);
+}
+
+.toggle-btn:active {
+    transform: scale(0.95);
 }
 
 /* Panel heading (h2) - Main title */
@@ -246,25 +301,25 @@ label {
    SCROLLBAR STYLING (For main panel and nested content)
    =================================== */
 
-/* Scrollbar track for main panel */
-#main-panel::-webkit-scrollbar {
+/* Scrollbar track for panel content */
+.panel-content::-webkit-scrollbar {
     width: 8px;
 }
 
-/* Scrollbar background for main panel */
-#main-panel::-webkit-scrollbar-track {
+/* Scrollbar background for panel content */
+.panel-content::-webkit-scrollbar-track {
     background: rgba(30, 30, 50, 0.5);
     border-radius: 10px;
 }
 
-/* Scrollbar thumb (the draggable part) for main panel */
-#main-panel::-webkit-scrollbar-thumb {
+/* Scrollbar thumb (the draggable part) for panel content */
+.panel-content::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
     border-radius: 10px;
 }
 
-/* Scrollbar thumb on hover for main panel */
-#main-panel::-webkit-scrollbar-thumb:hover {
+/* Scrollbar thumb on hover for panel content */
+.panel-content::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
 }
 
@@ -288,7 +343,7 @@ label {
 }
 
 /* Firefox scrollbar styling */
-#main-panel {
+.panel-content {
     scrollbar-width: thin;
     scrollbar-color: #8b5cf6 rgba(30, 30, 50, 0.5);
 }

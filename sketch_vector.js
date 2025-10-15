@@ -16,9 +16,9 @@ const VENUE = {
 };
 
 // Map projection settings
-let centerLat = 20.0;
-let centerLng = 40.0;
-let zoom = 10; // Scale factor (smaller for world view)
+let centerLat = 28.6; // New Delhi latitude
+let centerLng = 77.2; // New Delhi longitude
+let zoom = 6; // Scale factor for world view with New Delhi focus
 let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
@@ -195,7 +195,7 @@ function spawnParticles(x, y, count = 50) {
     }
 }
 
-// Function to draw gradient lines from yellow to purple
+// Function to draw gradient lines from pink to purple
 function drawGradientLine(x1, y1, x2, y2, weight, opacity) {
     let steps = 20; // Number of gradient segments
     
@@ -209,10 +209,10 @@ function drawGradientLine(x1, y1, x2, y2, weight, opacity) {
         let x2_seg = lerp(x1, x2, t2);
         let y2_seg = lerp(y1, y2, t2);
         
-        // Interpolate color from yellow to purple based on segment position
-        let r = lerp(255, 139, t1); // 255->139 (yellow to purple red)
-        let g = lerp(255, 92, t1);  // 255->92 (yellow to purple green) 
-        let b = lerp(0, 246, t1);   // 0->246 (yellow to purple blue)
+        // Interpolate color from pink to purple based on segment position
+        let r = lerp(236, 139, t1); // 236->139 (pink to purple red)
+        let g = lerp(72, 92, t1);   // 72->92 (pink to purple green) 
+        let b = lerp(153, 246, t1); // 153->246 (pink to purple blue)
         
         stroke(r, g, b, opacity);
         strokeWeight(weight);
@@ -232,8 +232,8 @@ function preload() {
 function setup() {
     createCanvas(windowWidth, windowHeight);
     
-    // Shift map 15% to the right to visually center it (more ocean on right than left)
-    offsetX = width * 0.25;
+    // Shift map slightly to the right to visually center it
+    offsetX = width * 0.1;
     
     // Process CSV data
     processData();
@@ -572,10 +572,59 @@ function drawArtistCityMarker(city) {
         markerSize = baseSize + 3;
     }
     
-    // Draw city marker with design colors
-    noStroke();
-    fill(255); // White for city markers
-    circle(pos.x, pos.y, markerSize);
+    // Special effects for selected city
+    if (selectedCity === city) {
+        // Draw radiating rings
+        push();
+        noFill();
+        stroke(255, 255, 255, 100); // White with transparency
+        
+        // Multiple radiating rings with different sizes and opacities
+        for (let i = 0; i < 3; i++) {
+            let ringSize = markerSize + 10 + (i * 8);
+            let ringOpacity = map(i, 0, 2, 80, 20);
+            let animatedSize = ringSize + sin(pulseAnimation * 2 + i * 0.5) * 4;
+            
+            stroke(255, 255, 255, ringOpacity);
+            strokeWeight(1.5);
+            circle(pos.x, pos.y, animatedSize);
+        }
+        pop();
+        
+        // Draw pulsing glow effect
+        push();
+        noStroke();
+        fill(255, 255, 255, 30);
+        let glowSize = markerSize + 8 + sin(pulseAnimation * 3) * 6;
+        circle(pos.x, pos.y, glowSize);
+        pop();
+        
+        // Draw main marker with fluctuation
+        push();
+        noStroke();
+        fill(255); // White for city markers
+        
+        // Add slight fluctuation to the main marker
+        let fluctuation = sin(pulseAnimation * 4) * 2;
+        let finalSize = markerSize + fluctuation;
+        
+        circle(pos.x, pos.y, finalSize);
+        pop();
+        
+        // Draw inner pulsing dot
+        push();
+        noStroke();
+        fill(139, 92, 246, 200); // Purple inner dot
+        let innerSize = 4 + sin(pulseAnimation * 5) * 2;
+        circle(pos.x, pos.y, innerSize);
+        pop();
+        
+    } else {
+        // Regular city marker
+        noStroke();
+        fill(255); // White for city markers
+        circle(pos.x, pos.y, markerSize);
+    }
 }
 
 function drawConnectionToVenue(city) {
@@ -695,10 +744,10 @@ function drawCurvedArtistLines(city, cityPos, venuePos) {
             let x2 = pow(1 - t2, 2) * cityPos.x + 2 * (1 - t2) * t2 * controlX + pow(t2, 2) * venuePos.x;
             let y2 = pow(1 - t2, 2) * cityPos.y + 2 * (1 - t2) * t2 * controlY + pow(t2, 2) * venuePos.y;
             
-            // Interpolate color from yellow to purple based on position
-            let r = lerp(255, 139, t1); // 255->139 (yellow to purple red)
-            let g = lerp(255, 92, t1);  // 255->92 (yellow to purple green) 
-            let b = lerp(0, 246, t1);   // 0->246 (yellow to purple blue)
+            // Interpolate color from pink to purple based on position
+            let r = lerp(236, 139, t1); // 236->139 (pink to purple red)
+            let g = lerp(72, 92, t1);   // 72->92 (pink to purple green) 
+            let b = lerp(153, 246, t1); // 153->246 (pink to purple blue)
             
             stroke(r, g, b, 160);
             line(x1, y1, x2, y2);
@@ -776,19 +825,19 @@ function drawConcentricCircles() {
         let radius = i * 15; // Each circle is 15 pixels apart
         let animatedRadius = radius + sin(pulseAnimation + i * 0.3) * 3; // Slight pulsing effect
         
-        // Draw glow effect (yellow) - multiple layers for stronger glow
+        // Draw glow effect (pink) - multiple layers for stronger glow
         for (let j = 3; j >= 1; j--) {
             let glowAlpha = map(j, 1, 3, 80, 20) * map(i, 1, numCircles, 1, 0.5);
-            stroke(255, 255, 0, glowAlpha); // Yellow glow
+            stroke(236, 72, 153, glowAlpha); // Pink glow
             strokeWeight(6 - j * 1.5);
             circle(cityPos.x, cityPos.y, animatedRadius * 2);
         }
         
-        // Draw main circle with gradient from yellow to purple/pink
+        // Draw main circle with gradient from pink to purple
         let t = i / numCircles;
-        let r = lerp(255, 139, t); // Yellow to purple red
-        let g = lerp(255, 92, t);  // Yellow to purple green
-        let b = lerp(0, 246, t);   // Yellow to purple blue
+        let r = lerp(236, 139, t); // Pink to purple red
+        let g = lerp(72, 92, t);   // Pink to purple green
+        let b = lerp(153, 246, t); // Pink to purple blue
         
         // Opacity stays higher - less transparent
         let alpha = map(i, 1, numCircles, 240, 160);
@@ -1004,7 +1053,7 @@ function touchMoved() {
             
             let oldZoom = zoom;
             zoom += zoomChange;
-            zoom = constrain(zoom, 10, 500);
+            zoom = constrain(zoom, 6, 500);
             
             // Zoom towards viewport center
             // Calculate zoom factor
@@ -1048,7 +1097,7 @@ function mouseWheel(event) {
     let oldZoom = zoom;
     let zoomChange = -event.delta * 0.3;
     zoom += zoomChange;
-    zoom = constrain(zoom, 10, 500);
+    zoom = constrain(zoom, 6, 500);
     
     // Zoom towards viewport center
     // Calculate zoom factor
@@ -1380,6 +1429,30 @@ function populateArtistDropdown() {
 
 function setupControls() {
     // Setup genre and artist dropdowns (buttons removed)
+    
+    // Setup collapsible panel functionality
+    setupCollapsiblePanel();
+}
+
+function setupCollapsiblePanel() {
+    const toggleBtn = document.getElementById('toggle-panel');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const mainPanel = document.getElementById('main-panel');
+    
+    if (toggleBtn && toggleIcon && mainPanel) {
+        toggleBtn.addEventListener('click', function() {
+            mainPanel.classList.toggle('collapsed');
+            
+            // Update icon
+            if (mainPanel.classList.contains('collapsed')) {
+                toggleIcon.textContent = '+';
+                toggleBtn.title = 'Expand Info Panel';
+            } else {
+                toggleIcon.textContent = '−';
+                toggleBtn.title = 'Collapse Info Panel';
+            }
+        });
+    }
 }
 
 function windowResized() {
@@ -1388,11 +1461,11 @@ function windowResized() {
 
 function keyPressed() {
     if (key === 'r' || key === 'R') {
-        zoom = 20;
+        zoom = 6;
         offsetX = 0;
         offsetY = 0;
-        centerLat = 20.0;
-        centerLng = 40.0;
+        centerLat = 28.6;
+        centerLng = 77.2;
         selectedCity = null;
         selectedArtist = null;
         updateInfoPanel(null);

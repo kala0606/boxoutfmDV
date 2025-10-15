@@ -13,20 +13,27 @@
 </head>
 <body>
     <div id="main-panel">
-        <h2>Boxout Wednesdays</h2>
-        <p class="subtitle">Global artists journeying to New Delhi</p>
+        <div class="panel-header">
+            <h2>Boxout Wednesdays</h2>
+            <p class="subtitle">Global artists journeying to New Delhi</p>
+            <button id="toggle-panel" class="toggle-btn" title="Toggle Info Panel">
+                <span id="toggle-icon">−</span>
+            </button>
+        </div>
         
-        <!-- City Info Section -->
-        <div id="city-info"></div>
-        
-        <!-- Dropdowns -->
-        <div class="filter-section">
-            <select id="genre-dropdown">
-                <option value="all">All Genres</option>
-            </select>
-            <select id="artist-dropdown">
-                <option value="">Select Artist</option>
-            </select>
+        <div id="panel-content" class="panel-content">
+            <!-- City Info Section -->
+            <div id="city-info"></div>
+            
+            <!-- Dropdowns -->
+            <div class="filter-section">
+                <select id="genre-dropdown">
+                    <option value="all">All Genres</option>
+                </select>
+                <select id="artist-dropdown">
+                    <option value="">Select Artist</option>
+                </select>
+            </div>
         </div>
     </div>
     
