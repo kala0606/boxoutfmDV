@@ -197,7 +197,7 @@ function spawnParticles(x, y, count = 50) {
     }
 }
 
-// Function to draw gradient lines from pink to purple
+// Function to draw gradient lines from pink to yellow
 function drawGradientLine(x1, y1, x2, y2, weight, opacity) {
     let steps = 20; // Number of gradient segments
     
@@ -211,10 +211,10 @@ function drawGradientLine(x1, y1, x2, y2, weight, opacity) {
         let x2_seg = lerp(x1, x2, t2);
         let y2_seg = lerp(y1, y2, t2);
         
-        // Interpolate color from pink to purple based on segment position
-        let r = lerp(236, 139, t1); // 236->139 (pink to purple red)
-        let g = lerp(72, 92, t1);   // 72->92 (pink to purple green) 
-        let b = lerp(153, 246, t1); // 153->246 (pink to purple blue)
+        // Interpolate color from pink to yellow based on segment position
+        let r = lerp(236, 255, t1); // 236->255 (pink to yellow red)
+        let g = lerp(72, 165, t1);  // 72->165 (pink to yellow green) 
+        let b = lerp(153, 0, t1);   // 153->0 (pink to yellow blue)
         
         stroke(r, g, b, opacity);
         strokeWeight(weight);
@@ -1005,10 +1005,10 @@ function drawCurvedArtistLines(city, cityPos, venuePos) {
             let x2 = pow(1 - t2, 2) * cityPos.x + 2 * (1 - t2) * t2 * controlX + pow(t2, 2) * venuePos.x;
             let y2 = pow(1 - t2, 2) * cityPos.y + 2 * (1 - t2) * t2 * controlY + pow(t2, 2) * venuePos.y;
             
-            // Interpolate color from pink to purple based on position
-            let r = lerp(236, 139, t1); // 236->139 (pink to purple red)
-            let g = lerp(72, 92, t1);   // 72->92 (pink to purple green) 
-            let b = lerp(153, 246, t1); // 153->246 (pink to purple blue)
+            // Interpolate color from pink to yellow based on position
+            let r = lerp(236, 255, t1); // 236->255 (pink to yellow red)
+            let g = lerp(72, 165, t1);  // 72->165 (pink to yellow green) 
+            let b = lerp(153, 0, t1);   // 153->0 (pink to yellow blue)
             
             stroke(r, g, b, 160);
             line(x1, y1, x2, y2);
@@ -1094,11 +1094,11 @@ function drawConcentricCircles() {
             circle(cityPos.x, cityPos.y, animatedRadius * 2);
         }
         
-        // Draw main circle with gradient from pink to purple
+        // Draw main circle with gradient from pink to yellow
         let t = i / numCircles;
-        let r = lerp(236, 139, t); // Pink to purple red
-        let g = lerp(72, 92, t);   // Pink to purple green
-        let b = lerp(153, 246, t); // Pink to purple blue
+        let r = lerp(236, 255, t); // Pink to yellow red
+        let g = lerp(72, 165, t);  // Pink to yellow green
+        let b = lerp(153, 0, t);   // Pink to yellow blue
         
         // Opacity stays higher - less transparent
         let alpha = map(i, 1, numCircles, 240, 160);
@@ -1688,7 +1688,6 @@ function updateEditionInfoPanel() {
         }
         if (event.youtubeLink && event.youtubeLink.trim() !== '' && !youtubeLink) {
             youtubeLink = event.youtubeLink.trim();
-            console.log('Found YouTube link for edition:', selectedEdition, 'Link:', youtubeLink);
         }
         // If we found both, we can break
         if (mixcloudLink && youtubeLink) break;
@@ -1699,7 +1698,6 @@ function updateEditionInfoPanel() {
         if (mixcloudLink) {
             // Show the player
             mixcloudPlayer.style.display = 'block';
-            console.log('Showing Mixcloud player for edition:', selectedEdition, 'Link:', mixcloudLink);
             
             // Create Mixcloud embed
             const embedDiv = document.getElementById('mixcloud-embed');
@@ -1717,7 +1715,6 @@ function updateEditionInfoPanel() {
                     
                     // Use Mixcloud's official player-widget embed URL (correct format)
                     embedUrl = `https://player-widget.mixcloud.com/widget/iframe/?feed=${encodeURIComponent('/' + mixPath + '/')}`;
-                    console.log('Created Mixcloud embed URL:', embedUrl);
                 }
                 
                 if (embedUrl) {
@@ -1753,7 +1750,6 @@ function updateEditionInfoPanel() {
         if (youtubeLink) {
             // Show the player
             youtubePlayer.style.display = 'block';
-            console.log('Showing YouTube player for edition:', selectedEdition, 'Link:', youtubeLink);
             
             // Create YouTube embed
             const embedDiv = document.getElementById('youtube-embed');
@@ -1764,33 +1760,22 @@ function updateEditionInfoPanel() {
                 let embedUrl = '';
                 let videoId = '';
                 
-                console.log('Processing YouTube link:', youtubeLink);
                 
                 // Handle different YouTube URL formats
                 if (youtubeLink.includes('youtube.com/watch?v=')) {
                     videoId = youtubeLink.split('v=')[1].split('&')[0];
-                    console.log('Extracted video ID from watch URL:', videoId);
                 } else if (youtubeLink.includes('youtu.be/')) {
                     videoId = youtubeLink.split('youtu.be/')[1].split('?')[0];
-                    console.log('Extracted video ID from youtu.be URL:', videoId);
                 } else if (youtubeLink.includes('youtube.com/embed/')) {
                     videoId = youtubeLink.split('embed/')[1].split('?')[0];
-                    console.log('Extracted video ID from embed URL:', videoId);
                 } else if (youtubeLink.includes('youtube.com/live/')) {
                     videoId = youtubeLink.split('live/')[1].split('?')[0];
-                    console.log('Extracted video ID from live URL:', videoId);
                 } else if (youtubeLink.includes('youtube.com/shorts/')) {
                     videoId = youtubeLink.split('shorts/')[1].split('?')[0];
-                    console.log('Extracted video ID from shorts URL:', videoId);
-                } else {
-                    console.log('No recognized YouTube URL format found');
                 }
                 
                 if (videoId) {
                     embedUrl = `https://www.youtube.com/embed/${videoId}`;
-                    console.log('Created YouTube embed URL:', embedUrl);
-                } else {
-                    console.log('Failed to extract video ID from:', youtubeLink);
                 }
                 
                 if (embedUrl) {
