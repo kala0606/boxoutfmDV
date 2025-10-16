@@ -67,7 +67,7 @@ const cityCoordinates = {
 const options = {
     lat: 20,
     lng: 20,
-    zoom: 1,
+    zoom: 2,
     style: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
 };
 

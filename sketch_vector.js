@@ -4,7 +4,9 @@ let csvData;
 let artistCities = [];
 let eventsData = [];
 let genresData = [];
+let editionsData = [];
 let selectedGenre = 'all';
+let selectedEdition = 'all';
 let selectedArtist = null;
 let countryStats = {};
 
@@ -259,7 +261,7 @@ function draw() {
     let filteredCities = getFilteredCities();
     
     // Only one visualization mode at a time:
-    // Priority: Artist > New Delhi All > City > Genre
+    // Priority: Artist > New Delhi All > City > Edition > Genre
     
     if (selectedArtist) {
         // Artist mode: Show only artist connection and circles
@@ -273,6 +275,11 @@ function draw() {
     } else if (selectedCity && selectedCity !== 'NEW_DELHI_ALL') {
         // City mode: Show only selected city connection
         drawConnectionToVenue(selectedCity);
+    } else if (selectedEdition !== 'all') {
+        // Edition mode: Show all cities for that edition with pulsing animation
+        for (let city of filteredCities) {
+            drawConnectionToVenue(city);
+        }
     } else if (selectedGenre !== 'all') {
         // Genre mode: Show all cities for that genre
         for (let city of filteredCities) {
@@ -386,25 +393,69 @@ function drawPolygon(coordinates) {
 function processData() {
     let cityStats = {};
     let allGenres = new Set();
+    let allEditions = new Set();
+    
+    // Debug: Log CSV column names
+    console.log('CSV Columns:', csvData.columns);
     
     // Process each row from CSV
     for (let i = 0; i < csvData.getRowCount(); i++) {
-        let artist = csvData.getString(i, 'Artist').trim();
-        let eventTitle = csvData.getString(i, 'Event Title');
-        let city = csvData.getString(i, 'City').trim();
-        let country = csvData.getString(i, 'Country').trim();
-        let genres = csvData.getString(i, 'Genre(s)');
-        let year = csvData.getString(i, 'Year');
+        try {
+            let artist = csvData.getString(i, 'Artist');
+            let eventTitle = csvData.getString(i, 'Event Title');
+            let city = csvData.getString(i, 'City');
+            let country = csvData.getString(i, 'Country');
+            let genres = csvData.getString(i, 'Genre(s)');
+            let year = csvData.getString(i, 'Year');
+            
+            // Try different possible column names for Mixcloud
+            let mixcloudLink = '';
+            try {
+                mixcloudLink = csvData.getString(i, 'Mixcloud Link') || '';
+            } catch (e) {
+                try {
+                    mixcloudLink = csvData.getString(i, 'Mixcloud') || '';
+                } catch (e2) {
+                    mixcloudLink = '';
+                }
+            }
+            
+            // Try different possible column names for YouTube
+            let youtubeLink = '';
+            try {
+                youtubeLink = csvData.getString(i, 'Youtube Link') || '';
+            } catch (e) {
+                try {
+                    youtubeLink = csvData.getString(i, 'YouTube Link') || '';
+                } catch (e2) {
+                    youtubeLink = '';
+                }
+            }
+            
+            // Safely trim string values (handle undefined/null)
+            artist = artist ? artist.trim() : '';
+            city = city ? city.trim() : '';
+            country = country ? country.trim() : '';
+            
+            // Debug: Log first few rows with Mixcloud data
+            if (i < 3 && mixcloudLink) {
+                console.log(`Row ${i} Mixcloud Link:`, mixcloudLink);
+            }
+            
+            // Debug: Log first few rows with YouTube data
+            if (i < 3 && youtubeLink) {
+                console.log(`Row ${i} YouTube Link:`, youtubeLink);
+            }
         
-        // Skip empty rows or rows without artist
-        if (!artist || artist === '') continue;
+            // Skip empty rows or rows without artist
+            if (!artist || artist === '') continue;
         
         // Normalize artist name to handle case variations
         artist = artist.toLowerCase();
         
         // Parse genres
         let genreList = [];
-        if (genres && genres.trim() !== '') {
+        if (genres && typeof genres === 'string' && genres.trim() !== '') {
             // Remove quotes and clean up genre string
             let cleanGenres = genres.replace(/['"]/g, '').trim();
             // Split by both comma and slash, then flatten the array
@@ -413,14 +464,28 @@ function processData() {
             genreList.forEach(g => allGenres.add(g));
         }
         
+        // Extract edition from event title
+        let edition = eventTitle || '';
+        if (eventTitle && typeof eventTitle === 'string' && eventTitle.includes('Boxout Wednesdays')) {
+            // Extract the edition number (e.g., "Boxout Wednesdays 001" -> "001")
+            let editionMatch = eventTitle.match(/Boxout Wednesdays (\d+)/);
+            if (editionMatch) {
+                edition = editionMatch[1];
+                allEditions.add(edition);
+            }
+        }
+        
         // Store event data
         eventsData.push({
             artist: artist,
             eventTitle: eventTitle,
+            edition: edition,
             city: city,
             country: country,
             genres: genreList,
-            year: year
+            year: year,
+            mixcloudLink: mixcloudLink ? mixcloudLink.trim() : '',
+            youtubeLink: youtubeLink ? youtubeLink.trim() : ''
         });
         
         // Aggregate by country
@@ -466,6 +531,17 @@ function processData() {
                 cityStats[city].genres[genre]++;
             });
         }
+        } catch (error) {
+            console.error(`Error processing row ${i}:`, error);
+            console.error('Row data:', {
+                artist: csvData.getString(i, 'Artist'),
+                eventTitle: csvData.getString(i, 'Event Title'),
+                city: csvData.getString(i, 'City'),
+                country: csvData.getString(i, 'Country'),
+                genres: csvData.getString(i, 'Genre(s)'),
+                year: csvData.getString(i, 'Year')
+            });
+        }
     }
     
     // Convert to array and calculate unique artists
@@ -483,21 +559,42 @@ function processData() {
     // Convert genres set to sorted array
     genresData = ['all', ...Array.from(allGenres).sort()];
     
+    // Convert editions set to sorted array (numerically sorted)
+    editionsData = ['all', ...Array.from(allEditions).sort((a, b) => parseInt(a) - parseInt(b))];
+    
     // Populate genre dropdown if it exists
     populateGenreDropdown();
+    
+    // Populate edition dropdown if it exists
+    populateEditionDropdown();
     
     // Populate artist dropdown if it exists
     populateArtistDropdown();
 }
 
 function getFilteredCities() {
-    if (selectedGenre === 'all') {
-        return artistCities;
+    let filteredCities = artistCities;
+    
+    // Filter by genre
+    if (selectedGenre !== 'all') {
+        filteredCities = filteredCities.filter(city => {
+            return city.genres[selectedGenre] > 0;
+        });
     }
     
-    return artistCities.filter(city => {
-        return city.genres[selectedGenre] > 0;
-    });
+    // Filter by edition
+    if (selectedEdition !== 'all') {
+        filteredCities = filteredCities.filter(city => {
+            // Check if any artist from this city performed in the selected edition
+            return city.artists.some(artist => {
+                return eventsData.some(event => 
+                    event.artist === artist && event.edition === selectedEdition
+                );
+            });
+        });
+    }
+    
+    return filteredCities;
 }
 
 function drawVenueMarker() {
@@ -508,6 +605,22 @@ function drawVenueMarker() {
     let d = dist(mouseX, mouseY, pos.x, pos.y);
     let isHovered = d < 30;
     
+    // Check if selected artist is from New Delhi
+    let isSelectedArtistFromDelhi = false;
+    if (selectedArtist) {
+        let artistEvent = eventsData.find(e => e.artist === selectedArtist);
+        if (artistEvent && artistEvent.city === 'New Delhi') {
+            isSelectedArtistFromDelhi = true;
+        }
+    }
+    
+    // Check if selected edition has artists from New Delhi
+    let isSelectedEditionHasDelhiArtists = false;
+    if (selectedEdition !== 'all') {
+        let editionEvents = eventsData.filter(e => e.edition === selectedEdition);
+        isSelectedEditionHasDelhiArtists = editionEvents.some(e => e.city === 'New Delhi');
+    }
+    
     // Calculate total unique events
     let uniqueEventTitles = [...new Set(eventsData.map(e => e.eventTitle))];
     let totalEvents = uniqueEventTitles.length;
@@ -517,36 +630,137 @@ function drawVenueMarker() {
             return eventData && eventData.genres.includes(selectedGenre);
         }).length;
     
-    // Simple size with slight animation
+    // Base size
     let starSize = 12;
     if (isHovered) {
         starSize = 14;
     }
     
-    // Draw New Delhi marker as a rotating star with orange color
-    push();
-    translate(pos.x, pos.y);
-    rotate(pulseAnimation * 0.05); // Slow rotation
-    
-    // Draw star
-    fill(255, 165, 0); // Orange color
-    noStroke();
-    
-    beginShape();
-    for (let i = 0; i < 5; i++) {
-        // Outer point
-        let angle1 = TWO_PI / 5 * i - HALF_PI;
-        let x1 = cos(angle1) * starSize;
-        let y1 = sin(angle1) * starSize;
-        vertex(x1, y1);
+    // If selected artist is from New Delhi OR selected edition has artists from New Delhi, add pulsing effects like other cities
+    if (isSelectedArtistFromDelhi || isSelectedEditionHasDelhiArtists) {
+        // Draw radiating rings (same as selected city)
+        push();
+        noFill();
+        stroke(255, 255, 255, 100); // White with transparency
         
-        // Inner point
-        let angle2 = TWO_PI / 5 * i - HALF_PI + TWO_PI / 10;
-        let x2 = cos(angle2) * starSize * 0.4;
-        let y2 = sin(angle2) * starSize * 0.4;
-        vertex(x2, y2);
+        // Multiple radiating rings with different sizes and opacities
+        for (let i = 0; i < 3; i++) {
+            let ringSize = starSize + 10 + (i * 8);
+            let ringOpacity = map(i, 0, 2, 80, 20);
+            let animatedSize = ringSize + sin(pulseAnimation * 2 + i * 0.5) * 4;
+            
+            stroke(255, 255, 255, ringOpacity);
+            strokeWeight(1.5);
+            circle(pos.x, pos.y, animatedSize);
+        }
+        pop();
+        
+        // Draw pulsing glow effect
+        push();
+        noStroke();
+        fill(255, 255, 255, 30);
+        let glowSize = starSize + 8 + sin(pulseAnimation * 3) * 6;
+        circle(pos.x, pos.y, glowSize);
+        pop();
+        
+        // Draw main star with fluctuation
+        push();
+        translate(pos.x, pos.y);
+        rotate(pulseAnimation * 0.05); // Slow rotation
+        
+        // Add slight fluctuation to the main star
+        let fluctuation = sin(pulseAnimation * 4) * 2;
+        let finalSize = starSize + fluctuation;
+        
+        // Draw star
+        fill(255, 165, 0); // Orange color
+        noStroke();
+        
+        beginShape();
+        for (let i = 0; i < 5; i++) {
+            // Outer point
+            let angle1 = TWO_PI / 5 * i - HALF_PI;
+            let x1 = cos(angle1) * finalSize;
+            let y1 = sin(angle1) * finalSize;
+            vertex(x1, y1);
+            
+            // Inner point
+            let angle2 = TWO_PI / 5 * i - HALF_PI + TWO_PI / 10;
+            let x2 = cos(angle2) * finalSize * 0.4;
+            let y2 = sin(angle2) * finalSize * 0.4;
+            vertex(x2, y2);
+        }
+        endShape(CLOSE);
+        
+        pop();
+        
+        // Draw inner pulsing dot
+        push();
+        noStroke();
+        fill(139, 92, 246, 200); // Purple inner dot
+        let innerSize = 4 + sin(pulseAnimation * 5) * 2;
+        circle(pos.x, pos.y, innerSize);
+        pop();
+        
+    } else {
+        // Regular New Delhi marker as a rotating star with orange color
+        push();
+        translate(pos.x, pos.y);
+        rotate(pulseAnimation * 0.05); // Slow rotation
+        
+        // Draw star
+        fill(255, 165, 0); // Orange color
+        noStroke();
+        
+        beginShape();
+        for (let i = 0; i < 5; i++) {
+            // Outer point
+            let angle1 = TWO_PI / 5 * i - HALF_PI;
+            let x1 = cos(angle1) * starSize;
+            let y1 = sin(angle1) * starSize;
+            vertex(x1, y1);
+            
+            // Inner point
+            let angle2 = TWO_PI / 5 * i - HALF_PI + TWO_PI / 10;
+            let x2 = cos(angle2) * starSize * 0.4;
+            let y2 = sin(angle2) * starSize * 0.4;
+            vertex(x2, y2);
+        }
+        endShape(CLOSE);
+        
+        pop();
     }
-    endShape(CLOSE);
+    
+    // Always draw New Delhi label
+    drawCityLabel('New Delhi', pos.x, pos.y, starSize, true);
+}
+
+// Function to draw city name labels
+function drawCityLabel(cityName, x, y, markerSize, isSelected) {
+    push();
+    
+    // Set text properties
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    
+    // Position label below the marker
+    let labelY = y + markerSize + 15;
+    
+    // Different styling for selected vs edition mode
+    if (isSelected) {
+        // Selected city - more prominent styling
+        fill(255, 255, 255, 220); // White text
+        stroke(0, 0, 0, 180); // Black outline
+        strokeWeight(2);
+    } else {
+        // Edition mode - slightly more subtle
+        fill(255, 255, 255, 180); // White text with transparency
+        stroke(0, 0, 0, 120); // Black outline with transparency
+        strokeWeight(1.5);
+    }
+    
+    // Draw the city name
+    text(cityName, x, labelY);
     
     pop();
 }
@@ -572,7 +786,7 @@ function drawArtistCityMarker(city) {
         markerSize = baseSize + 3;
     }
     
-    // Special effects for selected city
+    // Special effects for selected city or edition mode
     if (selectedCity === city) {
         // Draw radiating rings
         push();
@@ -619,6 +833,38 @@ function drawArtistCityMarker(city) {
         circle(pos.x, pos.y, innerSize);
         pop();
         
+        // Draw city name label for selected city
+        drawCityLabel(city.name, pos.x, pos.y, markerSize, true);
+        
+    } else if (selectedEdition !== 'all') {
+        // Edition mode: Add pulsing animation to all cities
+        // Draw pulsing glow effect
+        push();
+        noStroke();
+        fill(139, 92, 246, 40); // Purple glow
+        let glowSize = markerSize + 6 + sin(pulseAnimation * 2) * 4;
+        circle(pos.x, pos.y, glowSize);
+        pop();
+        
+        // Draw main marker with slight pulsing
+        push();
+        noStroke();
+        fill(255); // White for city markers
+        let pulseSize = markerSize + sin(pulseAnimation * 3) * 1;
+        circle(pos.x, pos.y, pulseSize);
+        pop();
+        
+        // Draw inner pulsing dot
+        push();
+        noStroke();
+        fill(139, 92, 246, 150); // Purple inner dot
+        let innerSize = 3 + sin(pulseAnimation * 4) * 1.5;
+        circle(pos.x, pos.y, innerSize);
+        pop();
+        
+        // Draw city name label for edition mode
+        drawCityLabel(city.name, pos.x, pos.y, markerSize, false);
+        
     } else {
         // Regular city marker
         noStroke();
@@ -636,8 +882,23 @@ function drawConnectionToVenue(city) {
     if (city.name === VENUE.name) return;
     
     if (selectedCity === city) {
-        // When selected, draw individual curved lines for each artist
+        // When city is individually selected, draw individual curved lines for each artist
         drawCurvedArtistLines(city, cityPos, venuePos);
+    } else if (selectedEdition !== 'all') {
+        // When edition is selected, count artists from this city in the selected edition
+        let editionArtistsFromCity = eventsData.filter(e => 
+            e.edition === selectedEdition && e.city === city.name
+        );
+        let uniqueEditionArtists = [...new Set(editionArtistsFromCity.map(e => e.artist))];
+        
+        if (uniqueEditionArtists.length > 0) {
+            // Create a temporary city object with edition-specific artists
+            let editionCity = {
+                ...city,
+                artists: uniqueEditionArtists
+            };
+            drawCurvedArtistLines(editionCity, cityPos, venuePos);
+        }
     } else {
         // When not selected, draw a single subtle line
         let opacity = 120;
@@ -880,15 +1141,18 @@ function handlePress() {
         // Spawn firecracker particles from New Delhi
         spawnParticles(venuePos.x, venuePos.y, 50);
         
-        // Clear artist and genre selections
+        // Clear artist, genre, and edition selections
         selectedArtist = null;
         selectedGenre = 'all';
+        selectedEdition = 'all';
         
         // Reset dropdowns
         const artistDropdown = document.getElementById('artist-dropdown');
         if (artistDropdown) artistDropdown.value = '';
         const genreDropdown = document.getElementById('genre-dropdown');
         if (genreDropdown) genreDropdown.value = 'all';
+        const editionDropdown = document.getElementById('edition-dropdown');
+        if (editionDropdown) editionDropdown.value = 'all';
         
         // Toggle showing all connections when clicking New Delhi
         if (selectedCity === 'NEW_DELHI_ALL') {
@@ -910,15 +1174,18 @@ function handlePress() {
             clickedOnInteractive = true; // Mark that we clicked on something interactive
             isDragging = false; // Don't treat as drag
             
-            // Clear artist and genre selections
+            // Clear artist, genre, and edition selections
             selectedArtist = null;
             selectedGenre = 'all';
+            selectedEdition = 'all';
             
             // Reset dropdowns
             const artistDropdown = document.getElementById('artist-dropdown');
             if (artistDropdown) artistDropdown.value = '';
             const genreDropdown = document.getElementById('genre-dropdown');
             if (genreDropdown) genreDropdown.value = 'all';
+            const editionDropdown = document.getElementById('edition-dropdown');
+            if (editionDropdown) editionDropdown.value = 'all';
             
             selectedCity = selectedCity === city ? null : city;
             updateInfoPanel(city);
@@ -1146,6 +1413,16 @@ function mouseMoved() {
 
 function updateVenueInfo() {
     const infoDiv = document.getElementById('city-info');
+    const mixcloudPlayer = document.getElementById('mixcloud-player');
+    const youtubePlayer = document.getElementById('youtube-player');
+    
+    // Hide both players for venue info
+    if (mixcloudPlayer) {
+        mixcloudPlayer.style.display = 'none';
+    }
+    if (youtubePlayer) {
+        youtubePlayer.style.display = 'none';
+    }
     
     // Calculate total unique events
     let uniqueEventTitles = [...new Set(eventsData.map(e => e.eventTitle))];
@@ -1190,6 +1467,16 @@ function updateVenueInfo() {
 
 function updateInfoPanel(city) {
     const infoDiv = document.getElementById('city-info');
+    const mixcloudPlayer = document.getElementById('mixcloud-player');
+    const youtubePlayer = document.getElementById('youtube-player');
+    
+    // Hide both players for city selection
+    if (mixcloudPlayer) {
+        mixcloudPlayer.style.display = 'none';
+    }
+    if (youtubePlayer) {
+        youtubePlayer.style.display = 'none';
+    }
     
     if (city) {
         // Get artists from this city
@@ -1220,6 +1507,16 @@ function updateInfoPanel(city) {
 
 function updateGenreInfoPanel() {
     const infoDiv = document.getElementById('city-info');
+    const mixcloudPlayer = document.getElementById('mixcloud-player');
+    const youtubePlayer = document.getElementById('youtube-player');
+    
+    // Hide both players for genre selection
+    if (mixcloudPlayer) {
+        mixcloudPlayer.style.display = 'none';
+    }
+    if (youtubePlayer) {
+        youtubePlayer.style.display = 'none';
+    }
     
     if (selectedGenre === 'all') {
         // Show overall stats when "all" is selected
@@ -1290,8 +1587,256 @@ function updateGenreInfoPanel() {
     `;
 }
 
+function updateEditionInfoPanel() {
+    const infoDiv = document.getElementById('city-info');
+    const mixcloudPlayer = document.getElementById('mixcloud-player');
+    const youtubePlayer = document.getElementById('youtube-player');
+    
+    if (selectedEdition === 'all') {
+        // Show overall stats when "all" is selected
+        updateVenueInfo();
+        // Hide both players
+        if (mixcloudPlayer) {
+            mixcloudPlayer.style.display = 'none';
+        }
+        if (youtubePlayer) {
+            youtubePlayer.style.display = 'none';
+        }
+        return;
+    }
+    
+    // Filter events by selected edition
+    let editionEvents = eventsData.filter(e => e.edition === selectedEdition);
+    
+    if (editionEvents.length === 0) {
+        infoDiv.innerHTML = `
+            <p class="city-name">Edition ${selectedEdition}</p>
+            <p style="color: #ec4899;">No artists found for this edition.</p>
+        `;
+        // Hide both players
+        if (mixcloudPlayer) {
+            mixcloudPlayer.style.display = 'none';
+        }
+        if (youtubePlayer) {
+            youtubePlayer.style.display = 'none';
+        }
+        return;
+    }
+    
+    // Group artists by city
+    let citiesMap = {};
+    editionEvents.forEach(event => {
+        if (!event.city || !cityCoordinates[event.city]) return;
+        
+        if (!citiesMap[event.city]) {
+            citiesMap[event.city] = {
+                city: event.city,
+                country: event.country,
+                artists: new Set()
+            };
+        }
+        citiesMap[event.city].artists.add(event.artist);
+    });
+    
+    // Convert to array and sort by number of artists (descending)
+    let citiesArray = Object.values(citiesMap).map(city => ({
+        ...city,
+        artistCount: city.artists.size,
+        artistList: Array.from(city.artists).sort()
+    })).sort((a, b) => b.artistCount - a.artistCount);
+    
+    // Get total stats
+    let totalArtists = [...new Set(editionEvents.map(e => e.artist))].length;
+    let totalCities = citiesArray.length;
+    let totalEvents = editionEvents.length;
+    
+    // Get event date
+    let eventDate = editionEvents[0] ? editionEvents[0].year : 'Unknown';
+    
+    // Build HTML for cities and artists
+    let citiesHtml = citiesArray.map(city => {
+        let artistsText = city.artistList.join(', ');
+        return `
+            <div style="margin-bottom: 12px; padding: 8px; background: rgba(139, 92, 246, 0.1); border-left: 2px solid rgba(139, 92, 246, 0.5); border-radius: 4px;">
+                <p style="margin: 0; font-weight: bold; color: #8b5cf6;">${city.city}, ${city.country}</p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #fbbf24;">${city.artistCount} artist${city.artistCount > 1 ? 's' : ''}</p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #e0e0e0;">${artistsText}</p>
+            </div>
+        `;
+    }).join('');
+    
+    infoDiv.innerHTML = `
+        <p class="city-name">Edition ${selectedEdition}</p>
+        <p style="font-size: 12px; color: #8b5cf6; margin-top: 5px;">★ Edition Overview</p>
+        <p><strong>Year:</strong> ${eventDate}</p>
+        <p><strong>Total Artists:</strong> ${totalArtists}</p>
+        <p><strong>Total Events:</strong> ${totalEvents}</p>
+        <p><strong>Cities:</strong> ${totalCities}</p>
+        <div style="margin-top: 15px;">
+            <p><strong>Artists by City:</strong></p>
+            ${citiesHtml}
+        </div>
+    `;
+    
+    // Find links for this edition
+    let mixcloudLink = '';
+    let youtubeLink = '';
+    
+    for (let event of editionEvents) {
+        if (event.mixcloudLink && event.mixcloudLink.trim() !== '' && !mixcloudLink) {
+            mixcloudLink = event.mixcloudLink.trim();
+        }
+        if (event.youtubeLink && event.youtubeLink.trim() !== '' && !youtubeLink) {
+            youtubeLink = event.youtubeLink.trim();
+            console.log('Found YouTube link for edition:', selectedEdition, 'Link:', youtubeLink);
+        }
+        // If we found both, we can break
+        if (mixcloudLink && youtubeLink) break;
+    }
+    
+    // Setup Mixcloud player
+    if (mixcloudPlayer) {
+        if (mixcloudLink) {
+            // Show the player
+            mixcloudPlayer.style.display = 'block';
+            console.log('Showing Mixcloud player for edition:', selectedEdition, 'Link:', mixcloudLink);
+            
+            // Create Mixcloud embed
+            const embedDiv = document.getElementById('mixcloud-embed');
+            if (embedDiv) {
+                embedDiv.innerHTML = '';
+                
+                // Extract Mixcloud URL and create embed using official Mixcloud Widget API
+                let embedUrl = '';
+                if (mixcloudLink.includes('mixcloud.com')) {
+                    // Extract the mix path from the URL
+                    let mixPath = mixcloudLink.replace('https://www.mixcloud.com/', '').replace('https://mixcloud.com/', '');
+                    if (mixPath.endsWith('/')) {
+                        mixPath = mixPath.slice(0, -1); // Remove trailing slash
+                    }
+                    
+                    // Use Mixcloud's official player-widget embed URL (correct format)
+                    embedUrl = `https://player-widget.mixcloud.com/widget/iframe/?feed=${encodeURIComponent('/' + mixPath + '/')}`;
+                    console.log('Created Mixcloud embed URL:', embedUrl);
+                }
+                
+                if (embedUrl) {
+                    // Create iframe for Mixcloud embed with correct attributes
+                    const iframe = document.createElement('iframe');
+                    iframe.src = embedUrl;
+                    iframe.width = '100%';
+                    iframe.height = '120';
+                    iframe.frameBorder = '0';
+                    iframe.style.border = 'none';
+                    iframe.style.borderRadius = '6px';
+                    iframe.allow = 'encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share;';
+                    
+                    embedDiv.appendChild(iframe);
+                } else {
+                    // Fallback: show link
+                    embedDiv.innerHTML = `
+                        <div style="padding: 20px; text-align: center; background: rgba(139, 92, 246, 0.1); border-radius: 6px;">
+                            <p style="margin: 0; color: #8b5cf6; font-size: 12px;">Mixcloud Link Available</p>
+                            <a href="${mixcloudLink}" target="_blank" style="color: #ec4899; text-decoration: none; font-size: 11px;">Open in Mixcloud</a>
+                        </div>
+                    `;
+                }
+            }
+        } else {
+            // Hide player if no Mixcloud link
+            mixcloudPlayer.style.display = 'none';
+        }
+    }
+    
+    // Setup YouTube player
+    if (youtubePlayer) {
+        if (youtubeLink) {
+            // Show the player
+            youtubePlayer.style.display = 'block';
+            console.log('Showing YouTube player for edition:', selectedEdition, 'Link:', youtubeLink);
+            
+            // Create YouTube embed
+            const embedDiv = document.getElementById('youtube-embed');
+            if (embedDiv) {
+                embedDiv.innerHTML = '';
+                
+                // Extract YouTube video ID and create embed
+                let embedUrl = '';
+                let videoId = '';
+                
+                console.log('Processing YouTube link:', youtubeLink);
+                
+                // Handle different YouTube URL formats
+                if (youtubeLink.includes('youtube.com/watch?v=')) {
+                    videoId = youtubeLink.split('v=')[1].split('&')[0];
+                    console.log('Extracted video ID from watch URL:', videoId);
+                } else if (youtubeLink.includes('youtu.be/')) {
+                    videoId = youtubeLink.split('youtu.be/')[1].split('?')[0];
+                    console.log('Extracted video ID from youtu.be URL:', videoId);
+                } else if (youtubeLink.includes('youtube.com/embed/')) {
+                    videoId = youtubeLink.split('embed/')[1].split('?')[0];
+                    console.log('Extracted video ID from embed URL:', videoId);
+                } else if (youtubeLink.includes('youtube.com/live/')) {
+                    videoId = youtubeLink.split('live/')[1].split('?')[0];
+                    console.log('Extracted video ID from live URL:', videoId);
+                } else if (youtubeLink.includes('youtube.com/shorts/')) {
+                    videoId = youtubeLink.split('shorts/')[1].split('?')[0];
+                    console.log('Extracted video ID from shorts URL:', videoId);
+                } else {
+                    console.log('No recognized YouTube URL format found');
+                }
+                
+                if (videoId) {
+                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                    console.log('Created YouTube embed URL:', embedUrl);
+                } else {
+                    console.log('Failed to extract video ID from:', youtubeLink);
+                }
+                
+                if (embedUrl) {
+                    // Create iframe for YouTube embed
+                    const iframe = document.createElement('iframe');
+                    iframe.src = embedUrl;
+                    iframe.width = '100%';
+                    iframe.height = '200';
+                    iframe.frameBorder = '0';
+                    iframe.style.border = 'none';
+                    iframe.style.borderRadius = '6px';
+                    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+                    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+                    iframe.allowFullscreen = true;
+                    iframe.title = 'YouTube video player';
+                    
+                    embedDiv.appendChild(iframe);
+                } else {
+                    // Fallback: show link
+                    embedDiv.innerHTML = `
+                        <div style="padding: 20px; text-align: center; background: rgba(236, 72, 153, 0.1); border-radius: 6px;">
+                            <p style="margin: 0; color: #ec4899; font-size: 12px;">YouTube Link Available</p>
+                            <a href="${youtubeLink}" target="_blank" style="color: #ec4899; text-decoration: none; font-size: 11px;">Open in YouTube</a>
+                        </div>
+                    `;
+                }
+            }
+        } else {
+            // Hide player if no YouTube link
+            youtubePlayer.style.display = 'none';
+        }
+    }
+}
+
 function updateArtistInfoPanel(artistName) {
     const infoDiv = document.getElementById('city-info');
+    const mixcloudPlayer = document.getElementById('mixcloud-player');
+    const youtubePlayer = document.getElementById('youtube-player');
+    
+    // Hide both players for artist selection
+    if (mixcloudPlayer) {
+        mixcloudPlayer.style.display = 'none';
+    }
+    if (youtubePlayer) {
+        youtubePlayer.style.display = 'none';
+    }
     
     // Get all events for this artist
     let artistEvents = eventsData.filter(e => e.artist === artistName);
@@ -1365,13 +1910,55 @@ function populateGenreDropdown() {
         selectedCity = null;
         selectedArtist = null;
         
-        // Reset artist dropdown
+        // Reset other dropdowns
         const artistDropdown = document.getElementById('artist-dropdown');
         if (artistDropdown) {
             artistDropdown.value = '';
         }
+        const editionDropdown = document.getElementById('edition-dropdown');
+        if (editionDropdown) {
+            editionDropdown.value = 'all';
+            selectedEdition = 'all';
+        }
         
         updateGenreInfoPanel();
+    });
+}
+
+function populateEditionDropdown() {
+    // Check if dropdown exists
+    const dropdown = document.getElementById('edition-dropdown');
+    if (!dropdown) return;
+    
+    // Clear existing options
+    dropdown.innerHTML = '';
+    
+    // Add editions
+    editionsData.forEach(edition => {
+        let option = document.createElement('option');
+        option.value = edition;
+        option.text = edition === 'all' ? 'All Editions' : `Edition ${edition}`;
+        dropdown.appendChild(option);
+    });
+    
+    // Add event listener
+    dropdown.addEventListener('change', function() {
+        selectedEdition = this.value;
+        selectedCity = null;
+        selectedArtist = null;
+        
+        // Reset other dropdowns
+        const artistDropdown = document.getElementById('artist-dropdown');
+        if (artistDropdown) {
+            artistDropdown.value = '';
+        }
+        const genreDropdown = document.getElementById('genre-dropdown');
+        if (genreDropdown) {
+            genreDropdown.value = 'all';
+            selectedGenre = 'all';
+        }
+        
+        updateEditionInfoPanel();
     });
 }
 
@@ -1401,11 +1988,16 @@ function populateArtistDropdown() {
             // Clear other selections
             selectedCity = null;
             selectedGenre = 'all';
+            selectedEdition = 'all';
             
-            // Reset genre dropdown
+            // Reset other dropdowns
             const genreDropdown = document.getElementById('genre-dropdown');
             if (genreDropdown) {
                 genreDropdown.value = 'all';
+            }
+            const editionDropdown = document.getElementById('edition-dropdown');
+            if (editionDropdown) {
+                editionDropdown.value = 'all';
             }
             
             // Show artist info panel
