@@ -1587,6 +1587,99 @@ function updateGenreInfoPanel() {
     `;
 }
 
+// Helper function to create a single Mixcloud embed
+function createMixcloudEmbed(container, mixcloudUrl, artistName) {
+    // Extract Mixcloud URL and create embed using official Mixcloud Widget API
+    let embedUrl = '';
+    if (mixcloudUrl.includes('mixcloud.com')) {
+        // Extract the mix path from the URL
+        let mixPath = mixcloudUrl.replace('https://www.mixcloud.com/', '').replace('https://mixcloud.com/', '');
+        if (mixPath.endsWith('/')) {
+            mixPath = mixPath.slice(0, -1); // Remove trailing slash
+        }
+        
+        // Use Mixcloud's official player-widget embed URL (correct format)
+        embedUrl = `https://player-widget.mixcloud.com/widget/iframe/?feed=${encodeURIComponent('/' + mixPath + '/')}`;
+    }
+    
+    if (embedUrl) {
+        // Create iframe for Mixcloud embed with correct attributes
+        const iframe = document.createElement('iframe');
+        iframe.src = embedUrl;
+        iframe.width = '100%';
+        iframe.height = '120';
+        iframe.frameBorder = '0';
+        iframe.style.border = 'none';
+        iframe.style.borderRadius = '6px';
+        iframe.allow = 'encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share;';
+        
+        container.appendChild(iframe);
+    } else {
+        // Fallback: show link
+        container.innerHTML = `
+            <div style="padding: 20px; text-align: center; background: rgba(139, 92, 246, 0.1); border-radius: 6px;">
+                <p style="margin: 0; color: #8b5cf6; font-size: 12px;">Mixcloud Link Available</p>
+                <a href="${mixcloudUrl}" target="_blank" style="color: #ec4899; text-decoration: none; font-size: 11px;">Open in Mixcloud</a>
+            </div>
+        `;
+    }
+}
+
+// Helper function to create multiple Mixcloud players with tabs
+function createMultipleMixcloudPlayers(container, mixcloudLinks) {
+    // Create tab container
+    const tabContainer = document.createElement('div');
+    tabContainer.className = 'mixcloud-tab-container';
+    
+    // Create tab buttons
+    const tabButtons = document.createElement('div');
+    tabButtons.className = 'mixcloud-tab-buttons';
+    
+    // Create content area
+    const contentArea = document.createElement('div');
+    contentArea.className = 'mixcloud-tab-content';
+    
+    // Create tabs for each Mixcloud link
+    mixcloudLinks.forEach((linkData, index) => {
+        // Create tab button
+        const tabButton = document.createElement('button');
+        tabButton.textContent = linkData.artist;
+        tabButton.className = `mixcloud-tab-button ${index === 0 ? 'active' : ''}`;
+        
+        // Create content div for this tab
+        const tabContent = document.createElement('div');
+        tabContent.className = `mixcloud-tab-panel ${index === 0 ? 'active' : ''}`;
+        
+        // Create the Mixcloud embed for this tab
+        createMixcloudEmbed(tabContent, linkData.url, linkData.artist);
+        
+        // Add click handler for tab switching
+        tabButton.addEventListener('click', () => {
+            // Hide all tab contents
+            const allTabContents = contentArea.querySelectorAll('.mixcloud-tab-panel');
+            allTabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active styling from all buttons
+            const allButtons = tabButtons.querySelectorAll('.mixcloud-tab-button');
+            allButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab content
+            tabContent.classList.add('active');
+            
+            // Add active styling to clicked button
+            tabButton.classList.add('active');
+        });
+        
+        tabButtons.appendChild(tabButton);
+        contentArea.appendChild(tabContent);
+    });
+    
+    // Assemble the tab container
+    tabContainer.appendChild(tabButtons);
+    tabContainer.appendChild(contentArea);
+    container.appendChild(tabContainer);
+}
+
 function updateEditionInfoPanel() {
     const infoDiv = document.getElementById('city-info');
     const mixcloudPlayer = document.getElementById('mixcloud-player');
@@ -1653,6 +1746,40 @@ function updateEditionInfoPanel() {
     // Get event date
     let eventDate = editionEvents[0] ? editionEvents[0].year : 'Unknown';
     
+    // Find links for this edition - collect ALL Mixcloud links
+    let mixcloudLinks = [];
+    let youtubeLink = '';
+    
+    for (let event of editionEvents) {
+        // Collect all unique Mixcloud links with artist info
+        if (event.mixcloudLink && event.mixcloudLink.trim() !== '') {
+            let link = event.mixcloudLink.trim();
+            // Check if this link is already in our array
+            let existingLink = mixcloudLinks.find(item => item.url === link);
+            if (!existingLink) {
+                mixcloudLinks.push({
+                    url: link,
+                    artist: event.artist,
+                    city: event.city,
+                    country: event.country
+                });
+            } else {
+                // Add artist to existing link if not already there
+                if (!existingLink.artists) {
+                    existingLink.artists = [existingLink.artist];
+                }
+                if (!existingLink.artists.includes(event.artist)) {
+                    existingLink.artists.push(event.artist);
+                }
+            }
+        }
+        
+        // Keep first YouTube link found
+        if (event.youtubeLink && event.youtubeLink.trim() !== '' && !youtubeLink) {
+            youtubeLink = event.youtubeLink.trim();
+        }
+    }
+    
     // Build HTML for cities and artists
     let citiesHtml = citiesArray.map(city => {
         let artistsText = city.artistList.join(', ');
@@ -1672,75 +1799,45 @@ function updateEditionInfoPanel() {
         <p><strong>Total Artists:</strong> ${totalArtists}</p>
         <p><strong>Total Events:</strong> ${totalEvents}</p>
         <p><strong>Cities:</strong> ${totalCities}</p>
+        ${mixcloudLinks.length > 0 ? `<p><strong>Mixcloud Sets:</strong> ${mixcloudLinks.length} available</p>` : ''}
         <div style="margin-top: 15px;">
             <p><strong>Artists by City:</strong></p>
             ${citiesHtml}
         </div>
     `;
     
-    // Find links for this edition
-    let mixcloudLink = '';
-    let youtubeLink = '';
-    
-    for (let event of editionEvents) {
-        if (event.mixcloudLink && event.mixcloudLink.trim() !== '' && !mixcloudLink) {
-            mixcloudLink = event.mixcloudLink.trim();
-        }
-        if (event.youtubeLink && event.youtubeLink.trim() !== '' && !youtubeLink) {
-            youtubeLink = event.youtubeLink.trim();
-        }
-        // If we found both, we can break
-        if (mixcloudLink && youtubeLink) break;
-    }
-    
-    // Setup Mixcloud player
+    // Setup Mixcloud player(s)
     if (mixcloudPlayer) {
-        if (mixcloudLink) {
+        if (mixcloudLinks.length > 0) {
             // Show the player
             mixcloudPlayer.style.display = 'block';
             
-            // Create Mixcloud embed
+            // Update section title based on number of links
+            const mixcloudTitle = mixcloudPlayer.querySelector('h3');
+            if (mixcloudTitle) {
+                if (mixcloudLinks.length === 1) {
+                    mixcloudTitle.textContent = `Mixcloud Player - ${mixcloudLinks[0].artist}`;
+                } else {
+                    mixcloudTitle.textContent = `Mixcloud Players (${mixcloudLinks.length} sets)`;
+                }
+            }
+            
+            // Create Mixcloud embed container
             const embedDiv = document.getElementById('mixcloud-embed');
             if (embedDiv) {
                 embedDiv.innerHTML = '';
                 
-                // Extract Mixcloud URL and create embed using official Mixcloud Widget API
-                let embedUrl = '';
-                if (mixcloudLink.includes('mixcloud.com')) {
-                    // Extract the mix path from the URL
-                    let mixPath = mixcloudLink.replace('https://www.mixcloud.com/', '').replace('https://mixcloud.com/', '');
-                    if (mixPath.endsWith('/')) {
-                        mixPath = mixPath.slice(0, -1); // Remove trailing slash
-                    }
-                    
-                    // Use Mixcloud's official player-widget embed URL (correct format)
-                    embedUrl = `https://player-widget.mixcloud.com/widget/iframe/?feed=${encodeURIComponent('/' + mixPath + '/')}`;
-                }
-                
-                if (embedUrl) {
-                    // Create iframe for Mixcloud embed with correct attributes
-                    const iframe = document.createElement('iframe');
-                    iframe.src = embedUrl;
-                    iframe.width = '100%';
-                    iframe.height = '120';
-                    iframe.frameBorder = '0';
-                    iframe.style.border = 'none';
-                    iframe.style.borderRadius = '6px';
-                    iframe.allow = 'encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share;';
-                    
-                    embedDiv.appendChild(iframe);
+                if (mixcloudLinks.length === 1) {
+                    // Single Mixcloud link - show directly
+                    let mixcloudLink = mixcloudLinks[0];
+                    createMixcloudEmbed(embedDiv, mixcloudLink.url, mixcloudLink.artist);
                 } else {
-                    // Fallback: show link
-                    embedDiv.innerHTML = `
-                        <div style="padding: 20px; text-align: center; background: rgba(139, 92, 246, 0.1); border-radius: 6px;">
-                            <p style="margin: 0; color: #8b5cf6; font-size: 12px;">Mixcloud Link Available</p>
-                            <a href="${mixcloudLink}" target="_blank" style="color: #ec4899; text-decoration: none; font-size: 11px;">Open in Mixcloud</a>
-                        </div>
-                    `;
+                    // Multiple Mixcloud links - create tabbed interface
+                    createMultipleMixcloudPlayers(embedDiv, mixcloudLinks);
                 }
             }
         } else {
-            // Hide player if no Mixcloud link
+            // Hide player if no Mixcloud links
             mixcloudPlayer.style.display = 'none';
         }
     }

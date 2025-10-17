@@ -210,9 +210,11 @@ canvas {
    =================================== */
 
 button {
-    /* Button colors - gradient background */
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-    color: white;
+    /* Glassmorphism background */
+    background: rgba(139, 92, 246, 0.2);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    color: #e0e0ff;
     
     /* Button dimensions and spacing */
     width: 100%;
@@ -224,17 +226,16 @@ button {
     border-radius: 8px;
     font-size: 14px;
     
-    /* Effects */
-    box-shadow: 0 4px 15px 0 rgba(139, 92, 246, 0.3);
+    /* Flat effects */
+    box-shadow: none;
     transition: all 0.3s ease;
     cursor: pointer;
 }
 
 /* Button hover effect */
 button:hover {
-    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
-    box-shadow: 0 6px 20px 0 rgba(139, 92, 246, 0.5);
-    transform: translateY(-2px);
+    background: rgba(139, 92, 246, 0.3);
+    border-color: rgba(139, 92, 246, 0.5);
 }
 
 
@@ -417,6 +418,85 @@ label {
     height: 100%;
     border: none;
     border-radius: 6px;
+}
+
+/* ===================================
+   MULTIPLE MIXCLOUD PLAYERS
+   =================================== */
+
+/* Tab container for multiple Mixcloud players */
+.mixcloud-tab-container {
+    width: 100%;
+    background: rgba(139, 92, 246, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+/* Tab buttons row */
+.mixcloud-tab-buttons {
+    display: flex;
+    background: rgba(139, 92, 246, 0.1);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Individual tab button */
+.mixcloud-tab-button {
+    flex: 1;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: #e0e0ff;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+}
+
+/* Active tab button */
+.mixcloud-tab-button.active {
+    background: rgba(139, 92, 246, 0.2);
+    border-bottom: 2px solid #8b5cf6;
+    color: #ffffff;
+}
+
+/* Tab button hover effect */
+.mixcloud-tab-button:hover:not(.active) {
+    background: rgba(139, 92, 246, 0.1);
+    color: #ffffff;
+}
+
+/* Tab content area */
+.mixcloud-tab-content {
+    padding: 0;
+    background: rgba(139, 92, 246, 0.05);
+}
+
+/* Individual tab content */
+.mixcloud-tab-panel {
+    display: none;
+    padding: 0;
+}
+
+.mixcloud-tab-panel.active {
+    display: block;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+    .mixcloud-tab-button {
+        padding: 6px 8px;
+        font-size: 10px;
+    }
+    
+    .mixcloud-tab-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .mixcloud-tab-button {
+        min-width: 50%;
+    }
 }
 
 /* ===================================
