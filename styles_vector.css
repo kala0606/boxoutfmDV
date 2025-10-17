@@ -3,6 +3,16 @@
    =================================== */
 
 /* ===================================
+   FONTS - Google Fonts Import
+   =================================== */
+
+/* Primary Font: Inter - Modern, clean sans-serif for body text and UI elements */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Secondary Font: Space Grotesk - Distinctive geometric sans-serif for headings */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ===================================
    BASE STYLES
    =================================== */
 
@@ -10,7 +20,8 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
     overflow: hidden;
     /* Background gradient using design palette */
     background: linear-gradient(135deg, #5C2D91 0%, #6A2E9C 50%, #5C2D91 100%);
@@ -121,7 +132,10 @@ canvas {
 #main-panel h2 {
     margin: 0 0 15px 0;
     padding-bottom: 0px;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: #e0e0ff;
     text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
@@ -129,7 +143,10 @@ canvas {
 /* Panel subheading (h3) - Section titles */
 #main-panel h3 {
     margin: 10px 0 10px 0;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: #e0e0ff;
     text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
@@ -137,13 +154,19 @@ canvas {
 /* Panel paragraph text */
 #main-panel p {
     margin: 6px 0;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
     color: #c4c4e0;
 }
 
 /* Subtitle under main heading */
 .subtitle {
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.02em;
     color: #c4c4e0;
 }
 
@@ -165,10 +188,12 @@ canvas {
 
 /* City name styling */
 .city-name {
-    font-weight: bold;
-    font-size: 16px;
-    color: #000000; /* Purple color */
-    text-shadow: 0 0 10px rgba(120,120,120, 0.5);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
 
@@ -180,7 +205,9 @@ canvas {
     display: flex;
     align-items: center;
     margin: 8px 0;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
+    font-weight: 400;
     color: #c4c4e0;
 }
 
@@ -210,10 +237,8 @@ canvas {
    =================================== */
 
 button {
-    /* Glassmorphism background */
-    background: rgba(139, 92, 246, 0.2);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    /* Text-only styling */
+    background: transparent;
     color: #e0e0ff;
     
     /* Button dimensions and spacing */
@@ -222,9 +247,13 @@ button {
     margin: 5px 0;
     
     /* Button styling */
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 8px;
+    border: none;
+    border-radius: 0;
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    text-align: left;
     
     /* Flat effects */
     box-shadow: none;
@@ -234,8 +263,8 @@ button {
 
 /* Button hover effect */
 button:hover {
-    background: rgba(139, 92, 246, 0.3);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(139, 92, 246, 0.1);
+    color: #ffffff;
 }
 
 
@@ -256,7 +285,10 @@ select {
     width: 100%;
     padding: 12px 35px 12px 12px; /* More padding for better look */
     border-radius: 10px;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
     cursor: pointer;
     margin-bottom: 12px;
     
@@ -368,14 +400,16 @@ label {
 
 .mixcloud-section h3 {
     margin: 0 0 10px 0;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 14px;
-    color: #8b5cf6;
     font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #8b5cf6;
 }
 
 #mixcloud-embed {
     width: 100%;
-    height: 120px;
+    height: 140px;
     border-radius: 6px;
     overflow: hidden;
 }
@@ -401,9 +435,11 @@ label {
 
 .youtube-section h3 {
     margin: 0 0 10px 0;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 14px;
-    color: #ec4899;
     font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #ec4899;
 }
 
 #youtube-embed {
@@ -447,11 +483,13 @@ label {
     background: transparent;
     border: none;
     color: #e0e0ff;
+    font-family: 'Inter', sans-serif;
     font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     cursor: pointer;
     transition: all 0.3s ease;
     border-bottom: 2px solid transparent;
-    font-weight: 500;
 }
 
 /* Active tab button */
@@ -498,6 +536,28 @@ label {
         min-width: 50%;
     }
 }
+
+/* ===================================
+   FONT SCHEME REFERENCE
+   ===================================
+   
+   Primary Font: Inter
+   - Usage: Body text, UI elements, dropdowns, buttons, tabs
+   - Weights: 300 (light), 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
+   - Characteristics: Clean, modern, highly readable
+   
+   Secondary Font: Space Grotesk
+   - Usage: Headings (h2, h3), city names, section titles
+   - Weights: 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
+   - Characteristics: Geometric, distinctive, strong presence
+   
+   Font Pairing Philosophy:
+   - Space Grotesk for impact and hierarchy
+   - Inter for clarity and readability
+   - Letter spacing adjusted for optimal readability
+   - Line height optimized for comfortable reading
+   
+   =================================== */
 
 /* ===================================
    COLOR REFERENCE

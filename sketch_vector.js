@@ -1607,7 +1607,7 @@ function createMixcloudEmbed(container, mixcloudUrl, artistName) {
         const iframe = document.createElement('iframe');
         iframe.src = embedUrl;
         iframe.width = '100%';
-        iframe.height = '120';
+        iframe.height = '140';
         iframe.frameBorder = '0';
         iframe.style.border = 'none';
         iframe.style.borderRadius = '6px';
